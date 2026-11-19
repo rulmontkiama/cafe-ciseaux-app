@@ -1,0 +1,16 @@
+.demo_login{
+    display: flex;
+    padding-top: 6vw;
+    button{
+        font-family: "alienleaguecond.ttf";
+        transition: background-color 0.35s ease;
+        cursor: pointer;
+        padding: 3vw 7vw;
+        margin: auto;
+        border-color: white;
+        border-style: solid;
+        border-radius: 2vw;
+        background-color: #0c0c0c;
+        color: white;
+    }
+}

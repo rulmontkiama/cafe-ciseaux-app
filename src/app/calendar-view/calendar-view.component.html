@@ -1,0 +1,84 @@
+<!-- calendar-view.component.html -->
+<div class="calendar">
+    <div *ngIf="isCalendarVisible"  class="calendarContainer">
+        <div class="calendar-header">
+            <div class="montCount">
+                  <p class="countUnit">{{monthCount}}</p>
+            </div>
+            <div class="calendarCommand">
+              <button (click)="previousMonth()">&lt;</button>
+              <h2>{{ monthNames[currentMonth] }} {{ currentYear }}</h2>
+              <button (click)="nextMonth()">&gt;</button>
+            </div>
+          </div>
+          <div class="calendar-grid">
+            <div *ngFor="let day of daysInMonth" class="calendar-day" [ngClass]="{'hasRdv': day.rdvCount > 0}" (click)="selectDay(day)">
+              <div class="day-name">
+                  <p>{{ day.dayName }}</p>
+              </div>
+              <div class="day-number">
+                  <p>{{ day.date }}</p>
+              </div>
+              
+              <div class="appointments-count" [ngClass]="{'hasRdv': day.rdvCount > 0}">
+                <p *ngIf="day.rdvCount > 0">{{ day.rdvCount }} RDV</p>
+                <p *ngIf="day.rdvCount <= 0">No RDV</p>
+              </div>
+            </div>
+          </div>
+    </div>
+
+
+     <!-- Section conditionnelle pour afficher les rendez-vous -->
+  <div *ngIf="!isCalendarVisible" class="appointments-list">
+    <div class="appointments-list-header">
+        <h3>Rendez-vous pour le {{ selectedDay.date }} {{ monthNames[currentMonth] }} {{ currentYear }}</h3>
+        <span class="close-appointments" (click)="showCalendar()">
+            <p>X</p>
+        </span>
+    </div>
+    <ul *ngFor="let rdv of selectedDay.rendezVous" class="RDV_list"  [attr.id]="'rdv-' + rdv.id">
+     <li class="rdvUnit" id="{{rdv.passed}}" [ngClass]="{'has-passed': rdv.passed}">
+      <img *ngIf="rdv.passed" src="assets/BLOCKED.svg" class="passedImg">           
+      <div *ngIf="!rdv.passed" class="RDV_delete">
+        <span id="{{rdv.id}}">
+            <img data-id="{{rdv.id}}" (click)="removeRDV($event)" src="assets/DELETE.svg">   
+        </span>
+      </div>
+      <div class="RDV_avatar">
+        <img src="{{rdv.avatar}}" class="profile_user_pictures" alt="profile_user_pictures">
+      </div>
+      <div class="rdv_infos_container">
+        <div>                    
+          <div class="RDV_names cut_angle">
+            <h2>{{rdv.nom | uppercase}}</h2><h2>{{rdv.prenom | uppercase}}</h2>
+          </div> 
+          <div>
+            <div class="RDV_left_list">
+              <div class="scissor_block">
+                <img src="assets/SCISSOR.svg">
+                <h1>{{rdv.scissor}}</h1>
+              </div>
+              <div>
+                <p>{{rdv.type | uppercase}}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>           
+      <div class="RDV_right_cont">
+        <div class="RDV_right_list cut_angle">
+          <div>
+            <p>{{rdv.date}}</p>
+            </div>
+            <div class="RDV_hours">
+                <p>{{rdv.hours}}</p>
+            </div>
+        </div>
+      </div>     
+    </li>                       
+    </ul>
+  </div>
+  </div>
+  
+

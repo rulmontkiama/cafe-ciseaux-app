@@ -1,0 +1,20 @@
+.beer_card{
+    padding-bottom: 10vw;
+}
+.beer_card1{
+    display: none;
+}
+.back-bttn{
+    position: fixed;
+    top: 17vw;
+    right: 4vw;
+    z-index: 54;
+    img{
+        height: 10vw;
+    }
+}
+@media only screen and (max-width:425px){
+    .back-bttn{
+        top: 23vw;
+    }    
+}

@@ -1,0 +1,126 @@
+.credits {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 12px;
+
+    p {
+        margin: 0;
+    }
+
+    .brand_link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        color: inherit;
+
+        .credit_logo {
+            height: 35px;
+            width: auto;
+            display: block;
+        }
+
+        .site_url {
+            font-size: 12px;
+            text-decoration: underline;
+        }
+    }
+}
+footer{
+    .fixed_part{
+        position: fixed;
+        bottom: 0;
+        display: flex;
+        background-color: white;
+        width: 100%;
+        border-top: 0.2vw solid #0c0c0c;        
+        padding-top: 1vw;
+        padding-bottom: 1vw;
+        z-index: 96;
+        ul{
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            justify-content: space-evenly;
+            margin-bottom: 10vw;
+            li{
+                display: flex;
+                img{
+                    height: 6vw;
+                    margin: auto;
+                }
+            }
+            #home,#wall{
+                display: none;
+            }
+        }
+    }
+    .moving_part{
+        .contactDetails{
+            display: flex;
+            flex-direction: column;
+        }
+        color: white;
+        padding-bottom: 31vw;
+        padding-top: 3vw;
+        ul{
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            width: -webkit-fill-available;
+        }
+        li{
+            display: flex;
+            height: auto;
+            h2{
+                margin: auto;
+            }
+        }
+        .policy{
+            padding-top: 2vw;
+            text-decoration: underline;
+            display: flex;
+            p{
+                margin: auto;
+            }
+        }
+    }
+    .close_schedule{
+        color: black;
+        font-size: 4vw;
+        z-index: 200;
+        top: 18vw;
+        right: 12vw;
+        position: fixed;
+    }
+    app-schedule{
+        height: -webkit-fill-available;
+        width: -webkit-fill-available;
+        left: 0;
+        top: 0;
+        z-index: 118;
+        position: fixed;
+        display: flex;
+        background-color: rgba(255, 255, 255, 0.87);
+    }
+}
+@media only screen and (max-width:768px){
+    .moving_part{
+        ul{
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-around !important;
+        }
+        li{
+            padding-top: 2vw;
+        }
+    }
+    .fixed_part{
+        img{
+            height:9vw !important ;
+        }
+    }
+  }

@@ -1,0 +1,257 @@
+.calendar{
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    p{
+        color: #ffffff;
+    }
+    .appointments-list{
+        width: 100%;
+        background-color: #000000;
+        .appointments-list-header{
+            display: flex;
+            justify-content: space-between;
+            .close-appointments{
+                background-color: red;
+                width: 7vw;
+                height: 7vw;
+                display: flex;
+                margin: auto;
+                margin-right: 0;
+                p{
+                    color: #ffffff;
+                    margin: auto;
+                }
+            }
+
+        }
+    }
+    .calendar-header{
+        display: flex;
+        flex-direction: column;
+        margin: auto;
+        .montCount{
+            display: none;
+            margin-bottom: 3vw;;
+            .countUnit{
+                margin: auto;
+                width: max-content;
+                background-color: #ffffff;
+                border: solid #ffffff 0.3vw;
+                color: #0c0c0c;
+                border-radius: 1vw;
+            }
+            p{
+                text-align: center;
+                padding: 1vw;
+                font-size: 5vw;
+            }
+        }
+        .calendarCommand{
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            margin-bottom: 4vw;
+            border-bottom: solid #ffffff;
+            h2{
+                color: #ffffff;
+            }
+            button{
+                background-color: #ffffff;
+                border: 0;
+                color: black;
+                width: 10vw;
+                border-radius: 0.5vw;
+            }
+        }
+    }
+    .appointments-count{
+        display: flex;
+        
+        p{
+            margin: auto;
+            margin-top: 0.5vw;
+            margin-bottom: 0.5vw;
+        }
+    }
+    .hasRdv{
+        background-color: #45ff45;
+        color: #0c0c0c;
+        border-radius: 0.4vw;
+    }
+    .calendar-grid{
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 3vw;
+        .hasRdv{
+            display: flex !important;
+        }
+        .calendar-day{
+            padding: 3vw;
+            flex-direction: column;
+            width: 13vw;
+            height: 13vw;
+            margin-bottom: 2vw;
+            border: 0.35vw solid white;
+            border-radius: 2vw;
+            flex: 0 1 calc(14vw - 1vw);
+            margin-bottom: 10px;
+            display: none;
+            .day-number{
+                display: flex;
+                p{
+                    margin: auto;
+                    font-size: 5vw;
+                }
+            }
+            .day-name{
+                display: flex;
+                p{
+                    margin: auto;
+                }
+            }
+        }
+    } 
+    .has-passed{
+        opacity: 0.5;
+    }
+    .RDV_list{
+        .rdvUnit{
+            border-bottom: 0.5vw solid white;
+            border-top: 0.5vw solid white;
+            display: flex;
+            flex-direction: row;
+            padding-bottom: 4vw;
+            position: relative;
+            padding-top: 4vw;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            .RDV_delete{
+                position: absolute;
+                background-color: #ffffff;
+                display: flex;
+                width: 12vw;
+                height: 12vw;
+                right: 0;
+                border-radius: 40vw;
+                span{
+                    margin: auto;
+                    display: flex;
+                    width: 80%;
+                    height: 80%;
+                    img{
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        object-position: center;
+                    }
+                }
+
+            }
+            .rdv_infos_container{
+                margin: auto;
+                margin-left: 5vw;
+            }
+            li{
+                display: flex;
+            }
+            .passedImg{
+                position: absolute;
+                height: 8vw;
+                right: 2vw;
+                z-index: 44;
+                opacity: 1;
+            }
+            .RDV_names{
+                h2{
+                    padding-right: 2vw;
+                    color: #0c0c0c;
+                    margin: auto;
+                }
+            }
+            .RDV_avatar{
+                position: relative;
+                display: flex;
+                width: 15vw;
+                border: 0.5vw solid white;
+                height: 15vw;
+                overflow: hidden;
+                .profile_user_pictures{
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    object-position: center;
+                }
+            }
+            .RDV_left_list{
+                display: flex;
+                flex-direction: column;
+                margin: auto;
+                margin-left: 0;
+                img{
+                    height: 5vw;
+                    margin: auto;
+                    margin-left: 0;
+                }
+                h1{
+                    padding-left: 1vw;
+                    padding-right: 1vw;
+                }
+                li{
+                    font-size: 2.5vw;
+                }
+                .scissor_block{
+                    display: flex;
+                    width: max-content;
+                    flex-direction: row;
+                    padding-bottom: 2vw;
+                    h1{
+                        color: #ffffff;
+                    }
+                }
+                .RDV_hours{
+                    font-weight: 600;
+                }
+
+            }
+            .RDV_right_cont{
+                margin: auto;
+                margin-right: 0;
+                margin-bottom: 0;
+                p{
+                    color: #000000;
+                }
+                .RDV_right_list{
+                    margin: auto;
+                    margin-bottom: 0;
+                    font-size: 3vw;
+                    flex-direction: column;
+                    li:nth-child(1){
+                        p{
+                            border-bottom: 0.5vw solid #0c0c0c;
+                        }
+                    }
+                    p{
+                        margin: auto;
+                        margin-right: 0;
+                    }
+                }
+            }
+        }
+    }
+
+    
+}
+@media only screen and (max-width:375px){
+    .calendar{
+        .calendar-grid{
+            gap: 5vw;
+            .calendar-day{
+                width: 19vw;
+                height: 19vw;
+                flex: 0 1 19vw;
+            }
+        }
+    }
+}

@@ -1,0 +1,23 @@
+<div class="back-bttn" [routerLink] = "['/bar']">
+    <img src="assets/BACK.svg">
+</div>
+<div class="cafe-ciseaux-card beer_card1" *ngFor="let bar of beer ">
+    <span class="cut_angle">
+        <h2>{{ bar.title | uppercase }}</h2>
+    </span>
+    <img [src]="bar.imageUrl" [alt]="bar.title">
+    <p>{{ bar.description }}</p>    
+</div>
+
+<div class="cafe-ciseaux-card beer_card" >
+   <ul class="beers_list">
+        <li  *ngFor="let beer of allBeers" class="beerUnit">
+            <span class="cut_angle">
+                <h2>{{ beer.nom | uppercase }}</h2>
+            </span>
+            <img [src]="beer.imageUrl" [alt]="beer.title">
+            <p>{{ beer.description }}</p>    
+        </li>
+    </ul>
+</div>
+

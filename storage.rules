@@ -1,0 +1,53 @@
+rules_version = '2';
+
+// Règles de sécurité Firebase Storage — Café-Ciseaux
+//
+// Organisation du bucket :
+//   images/<fichier>            Images gérées par l'admin (photos de bières, AVATAR.svg par défaut)
+//   avatars/<uid>/<fichier>     Avatars envoyés par les utilisateurs
+//
+// Un admin est reconnu par l'existence du document Firestore admin/<UID>
+// (voir firestore.rules et FIREBASE_SETUP.md §4.2).
+// Tout ce qui n'est pas explicitement autorisé ci-dessous est refusé.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/admin/$(request.auth.uid));
+    }
+
+    // Image de 5 Mo maximum
+    function isImageUpload() {
+      return request.resource.contentType.matches('image/.*')
+        && request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // Avatar utilisateur : formats matriciels uniquement (pas de SVG, qui peut embarquer du script)
+    function isAvatarUpload() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp|gif)')
+        && request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // Images publiques : lecture pour tous, écriture réservée aux admins.
+    match /images/{fileName} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isImageUpload();
+      allow delete: if isAdmin();
+    }
+
+    // Avatars : chaque utilisateur ne gère que son propre dossier.
+    match /avatars/{userId}/{fileName} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn()
+        && request.auth.uid == userId
+        && isAvatarUpload();
+      allow delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+    }
+  }
+}

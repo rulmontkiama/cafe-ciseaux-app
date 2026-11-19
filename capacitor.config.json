@@ -1,0 +1,8 @@
+{
+  "appId": "com.cafeciseaux.myapp",
+  "appName": "cafe-ciseaux",
+  "webDir": "dist/cafe_ciseaux",
+  "server": {
+    "androidScheme": "https"
+  }
+}

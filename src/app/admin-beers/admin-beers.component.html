@@ -1,0 +1,31 @@
+<div class="wrapper">
+    <div class="file_upload_container">
+      <input type="text" placeholder="Nom de la bière" id="beerName" [(ngModel)]="beerName">
+      <textarea id="beerDescription" placeholder="Description de la bière" [(ngModel)]="beerDescription"></textarea>
+      
+    <!-- Custom file input button -->
+    <div class="custom-file-input">
+        <button type="button" (click)="fileInput.click()">Parcourir les fichiers</button>
+        <input type="file" #fileInput style="display: none;" (change)="onFileSelected($event)">
+    </div>
+
+      <!-- Bouton pour télécharger la bière -->
+      <button class="uploadBeer" type="button" (click)="uploadBeer()">Télécharger la bière</button>
+    </div>
+  </div>
+<div class="beers_container">
+    <h1>Liste des bières : </h1>
+    <ul class="beers_list">
+        <li *ngFor="let beer of allBeers" class="beerUnit">
+            <span (click)="confirmAndRemoveBeer(beer.id)"   class="removebeer">
+                <h2>X</h2>
+            </span>
+            <div class="beerImageContainer">
+                <img src="{{beer.imageUrl}}">
+            </div>
+            <h2 class="cut_angle">{{beer.nom}}</h2>
+            <p>{{beer.description}}</p>
+        </li>
+    </ul>
+</div>  
+

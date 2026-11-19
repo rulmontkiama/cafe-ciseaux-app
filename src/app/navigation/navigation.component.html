@@ -1,0 +1,57 @@
+
+<app-schedule *ngIf = 'scheduleBool'></app-schedule>   
+<div class="navigation-links"  [@collapse]="collapsed">       
+        <nav class="navigation">        
+            <img class="logo" src="assets/LOGO_CC2.svg" alt="cafe_ciseaux_logo">
+            <div class="nav_split">
+              <div class="split_1">
+                <ul class="navigation_list">
+                    <li><h2> <a (click)="collapse()" class="nav-link" [routerLink] = "['']" routerLinkActive = "active">LE SALON</a></h2></li>
+                    <li><h2> <a (click)="collapse()" class="nav-link" [routerLink] = "['']" routerLinkActive = "active">LE BAR</a></h2></li>
+                    <li><h2> <a class="schedule-link" >HORAIRES</a></h2></li>
+                    <li><h2>WALL PICTURES</h2></li>
+                </ul>
+              </div>
+              <span class="spanBorder"></span>
+              <div class="split_2">
+                <div class="contactDetails">
+                    <ul>
+                        <li class="names">
+                            <p>{{ this.contactDetails[0].name | uppercase }}</p>
+                            <p>{{ this.contactDetails[0].surname | uppercase }}</p>
+                        </li>
+                        <li class="phone">
+                            <span>T.{{ this.contactDetails[0].phone_n | uppercase }}</span>
+                        </li>
+                        <li class="adress">
+                            <div>
+                                <span>{{ this.contactDetails[0].street | uppercase }}</span>
+                            </div>
+                            <div >
+                                <span>{{ this.contactDetails[0].city | uppercase }}</span>
+                                <span>{{ this.contactDetails[0].zip_code | uppercase }}</span>
+                            </div>
+                        </li>                   
+                    </ul>
+                </div>
+
+              </div>
+            </div>
+            <div class="policy" (click)="collapse()" [routerLink] = "['policy']" routerLinkActive = "active">
+              <p>politique de confidentialité</p>
+            </div>
+
+        </nav>
+</div>
+      <div class="burger_menu">
+        <button class="hamburger hamburger--elastic " type="button" *ngIf="collapsed"  (click)="expand()" >
+          <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+          </span>
+        </button>
+        <button class="hamburger hamburger--elastic  is-active" type="button" *ngIf="!collapsed"  (click)="collapse()" >
+          <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+          </span>
+        </button>        
+      </div> 

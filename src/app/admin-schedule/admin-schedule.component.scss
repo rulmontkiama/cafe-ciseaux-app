@@ -1,0 +1,123 @@
+.admin_schedule_container{
+    border-bottom: 0.5vw solid white;
+    padding-bottom: 4vw;
+    margin-top: 4vw;
+    #enable_days_RDV{
+        color: white;
+        .reserved{
+            .reservationBttn{
+                background-color: #45ff45;
+            }
+        }
+        .not-reserved{
+            .reservationBttn{
+                background-color: red;
+            }
+        }
+        .reservationBttn{
+            display: flex;
+            border: solid #ffffff 0.2vw;
+            width: 34vw;
+            border-radius: 2vw;
+            p{
+                margin: auto;
+                margin-top: 3vw;
+                margin-bottom: 3vw;
+            }
+        }
+    }
+    h1{
+        border-bottom: 0.5vw solid white;
+        color: white;
+    }
+.open_hours{
+    padding-top: 6vw;
+}
+.blocked_day{
+    background-color: red;
+}
+.block_day_unit{
+    font-size: 5vw;
+    border-bottom: solid;
+    display: flex;
+    margin-bottom: 4vw;
+    .block_day_cont{
+        display: flex;
+        width: -webkit-fill-available;
+        .block_day_text{
+            display: flex;
+        }
+        .remove_block_day{
+            background-color: red;
+            padding-left: 2vw;
+            padding-right: 2vw;
+            padding-top: 1vw;
+            height: 4vw;
+            padding-bottom: 1vw;
+            display: flex;
+            margin: auto;
+            margin-right: 0;
+            margin-top: 2vw;
+            margin-bottom: 2vw;
+        }
+        p{margin: auto;}
+    }
+}
+.open_hours_list{
+    h3{
+        margin: 0;
+    }
+    .open_hours_unit{
+        padding-top: 2vw;
+    }
+    .hours_set_unit{
+        display: flex;
+        flex-direction: column;
+        .separate{
+            color: white;
+            padding-left: 1vw;
+            padding-right: 1vw;
+        }
+        img{
+            height: 3vw;
+            margin: auto;
+        }
+        .hours_set_unit_open,.hours_set_unit_closed{
+            display: flex;
+            margin-bottom: 7vw;
+            div{
+                padding-left: 1vw;
+                width:max-content;
+                padding-right: 1vw;
+                display: flex;
+            }
+        }
+    }
+    .hours_settings{
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        h4,h5{
+            color: white;
+        }
+        h4{
+            text-decoration: underline;
+            text-decoration-color: white;
+        }
+    }
+    input{
+        background-color: unset;
+        color: white;
+       
+    }    
+}
+}
+.border-solid-white-1 {
+    border: 0;
+    border-bottom: 0.3vw solid rgba(255, 255, 255, 1);
+  }
+  
+  .border-solid-white-0-4 {
+    border: 0;
+    border-bottom: 0.3vw solid rgba(255, 255, 255, 0.2);
+  }

@@ -1,0 +1,48 @@
+<footer>
+    <app-schedule *ngIf = 'scheduleBool'></app-schedule> 
+    <div *ngIf = 'scheduleBool' class="close_schedule" (click) = 'viewSchedule()'>X</div>
+    <div class="fixed_part">
+        <ul>
+            <li class="" id="home"  [routerLink] = "['']">
+                <img src="assets/HOME.svg">
+            </li>
+            <li class="" id="rendez_vous"  [routerLink] = "['rendez-vous']">
+                <img src="assets/RDV.svg">
+            </li>
+            <li class="" id="bar" [routerLink] = "['beer-selection']">
+                <img src="assets/BAR.svg">
+            </li>
+            <li class="" id="horaires" (click) = 'viewSchedule()'>
+                <img src="assets/SCHEDULE.svg">
+            </li>
+            <li class="" id="wall">
+                <img src="assets/WALL.svg">
+            </li>
+        </ul>
+    </div>
+    <div class="moving_part">
+            <div class="contactDetails">
+                <ul>
+                    <li class="names">
+                        <h2>{{ this.contactDetails[0].nameComplete | uppercase }} </h2>
+                    </li>
+                    <li class="phone">
+                        <h2>T.{{ this.contactDetails[0].phone_n | uppercase }}</h2>
+                    </li>
+                    <li class="adress">
+                        <h2>{{ this.contactDetails[0].adressComplete | uppercase }}</h2>
+                    </li>                   
+                </ul>
+                <div class="policy"  [routerLink] = "['policy']" routerLinkActive = "active">
+                    <p>politique de confidentialité</p>
+                </div>
+                <div class="credits">
+                    <p>Créé par <strong>Dylan Bigare</strong></p>
+                    <a href="https://tract.be" target="_blank" rel="noopener noreferrer" class="brand_link">
+                        <img src="assets/TRACT_TRIANGLE.png" alt="Logo TRACT" class="credit_logo logo_triangle">
+                        <img src="assets/TRACT_LETTERS.png" alt="TRACT" class="credit_logo logo_letters">
+                    </a>
+                </div>
+            </div> 
+        </div>
+</footer>

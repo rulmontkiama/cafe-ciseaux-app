@@ -1,0 +1,61 @@
+<div class="profile_container">
+    <div class="user_dashboard">
+        <div class="avatar" (click) = 'changeAvatar()'>
+            <img src="{{avatar }}"  (avatarChanged)="uploadChangedHandler($event)" class="profile_user_pictures" alt="profile_user_pictures">
+            <img src="assets/EDIT_PIC.svg" class="edit_pic">
+        </div>
+        <app-file-upload *ngIf = 'avatarBool && !this.uploadBool'  (uploadChanged)="uploadChangedHandler($event)" (close)="avatarBool = false"></app-file-upload>
+        <div class="userContainer">
+          <div class="name_row cut_angle">
+              <h2 *ngIf = 'this.nom' >{{nom | uppercase}}</h2>
+              <h2 *ngIf = 'this.prenom' >{{prenom | uppercase}}</h2>
+          </div>
+          <div (click) = 'logout()' class="userParams">
+            <img src="{{imageUrl}}/LOGOUT.svg">
+          </div>
+      </div>
+      
+    
+    </div>
+    <section id="accountParameters">
+      <h2>Paramètres du compte</h2>
+  
+      <!-- Changement de mot de passe -->
+      <div class="paramtersContainer">
+          <h3>Changer le mot de passe</h3>
+          <label for="oldPassword">Ancien mot de passe</label>
+          <input type="password" id="oldPassword" name="oldPassword" required>
+  
+          <label for="newPassword">Nouveau mot de passe</label>
+          <input type="password" id="newPassword" name="newPassword" required>
+  
+          <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" required>
+  
+          <button (click)="changePassword()">Changer le mot de passe</button>
+      </div>
+  
+      <!-- Suppression de compte -->
+
+  
+      <!-- Autres paramètres de compte (à ajouter selon vos besoins) -->
+      <!-- ... -->
+  
+    </section>
+    <div [routerLink] = "['/rendez-vous']" class="rdvBttn">
+      <p>PRENDRE RDV</p>
+    </div>
+    <h2>SUIVI DE MES RENDEZ-VOUS</h2>
+    <app-calendar-view></app-calendar-view>
+
+
+
+    <div>
+      <h3>Supprimer le compte</h3>
+      <p>Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.</p>
+      <button (click)="deleteAccount()">Supprimer le compte</button>
+  </div>
+    <div class = 'col-md-4 offset-4 mt-5' >       
+        <button class = 'logout_block btn btn-outline-info bttn_cyber' (click) = 'logout()'>LOGOUT</button>      
+    </div>
+</div>

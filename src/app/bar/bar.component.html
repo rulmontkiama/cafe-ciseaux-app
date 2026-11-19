@@ -1,0 +1,13 @@
+<div class="cafe-ciseaux-card" *ngFor="let bar of barDetails ">
+    <span class="cut_angle">
+        <h2>{{ bar.title | uppercase }}</h2>
+    </span>
+    <img [src]="bar.imageUrl" [alt]="bar.title">
+    <h1>{{ bar.description }}</h1>
+    <p>{{ bar.text }}</p>    
+</div>
+<div class="beer_selection">
+    <div class="carte" [routerLink] = "['/beer-selection']">
+        <h2>NOTRE SÉLECTION</h2>
+    </div>
+</div>

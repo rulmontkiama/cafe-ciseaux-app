@@ -1,0 +1,47 @@
+
+<div *ngIf=" adminUser" class="user_info_container" id="user_info_{{ adminUser.uid }}" >
+  <div class="user_info">
+    <div class="avatar_container">
+      <img  src="{{ adminUser.avatar }}">
+    </div>
+    <div class="name_container cut_angle">
+      <h3 class="name">{{ adminUser.nom | uppercase }} {{ adminUser.prenom | uppercase}}</h3>
+    </div>
+  </div>
+  <div class="conversation" *ngIf="conversation">
+    <ng-container *ngFor="let message of conversation" >
+      <div  class="message" [ngClass]="{'message_from_me': message.uid === userDetails.uid, 'message_from_other': message.uid !== userDetails.uid}" >
+        <div class="message_details">
+          <div class="user_details">
+            <h3 class="prenom">{{ message.prenom | uppercase}}</h3>
+          </div>
+          <div class="message_content">
+            <span class="message_text">
+              <p>
+                {{ message.msg }}
+              </p>
+        </span>
+          </div>
+          <div class="date_content">
+            <span class="date">{{ message.date  }}</span>
+            <span class="date">{{ message.hours }}</span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+  <div class="send_msg_container">
+  <form class="send_msg_form" (ngSubmit)="onSendMessage()" class="send_msg_form">
+    <div class="message_container">
+      <textarea name="newMessage" [(ngModel)]="newMessage" type="text" placeholder="Écrire un message..."></textarea>
+      <div class="submit_container">
+        <div class="submit_container">
+          <button #submitButton id="submit-button" style="display:none"></button>
+          <div (click)="triggerSubmit()"><img src="assets/SEND.svg"></div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+</div>
+

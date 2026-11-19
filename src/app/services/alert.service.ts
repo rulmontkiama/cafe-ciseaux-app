@@ -1,0 +1,23 @@
+import { Injectable } from '@angular/core';
+import { ToastrService } from 'ngx-toastr';
+@Injectable({
+  providedIn: 'root'
+})
+export class AlertService {
+
+  constructor(private toastr:ToastrService) { 
+    
+  }
+  showSucces(title:any,msg:any){
+    this.toastr.success(msg,title,  {positionClass:'inline',
+    timeOut:9000})
+  }
+  showError(title:any,msg:any){
+    this.toastr.error(msg,title,  {positionClass:'inline',
+    timeOut:9000})
+  }
+  showWarning(title:any,msg:any){
+    this.toastr.error(msg,title,  {positionClass:'inline',
+    timeOut:9000})
+  }
+}

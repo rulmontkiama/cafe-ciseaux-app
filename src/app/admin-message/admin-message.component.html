@@ -1,0 +1,75 @@
+<div>
+  <div class="admin_search" *ngIf=" !selectedUser">
+    <img src="assets/FIND_USER.svg">
+    <input placeholder="Rechercher" class="admin_search_input" type="text" (input)="onSearchUsers($event)">
+  </div>   
+</div>
+<div class="user_find_container">
+  <ul class="user_find_list">
+    <li id="user_find_{{ user.uid }}" *ngFor="let user of searchResults | async" (click)="selectUser(user)">
+      <span class="unread" *ngIf="user.is_read == false && user.from_id != this.userDetails.uid "><p>1</p></span>
+      <span class="avatar_find">
+        <img src="{{ user.avatar }}">
+      </span>
+      <div class="find_split">
+        <span class="cut_angle names_find">
+          {{ user.nom | uppercase}} {{ user.prenom | uppercase}}
+        </span> 
+        <span class=" msg_find">
+          {{ user.msg }} 
+        </span>
+      </div>     
+    </li>
+    <ng-container *ngIf="(searchResults | async)?.length === 0 && !selectedUser">
+      <li>Aucun utilisateur trouvé</li>
+    </ng-container>
+  </ul>
+</div>
+  <!--clique sur la case de l'utilsateur choisi dans la liste-->
+  <div class="user_info_container" id="user_info_{{ selectedUser.uid }}" *ngIf="selectedUser">
+    
+    <div  (click)="deselectUser()"  class="close_conversation">X</div>
+    <div class="user_info">
+      <div class="avatar_container">
+        <img src="{{ selectedUser.avatar }}">
+      </div>
+      <div class="name_container cut_angle">
+        <span class="name">{{ selectedUser.nom | uppercase }} {{ selectedUser.prenom | uppercase}}</span>
+      </div>
+    </div>
+    <div class="conversation">
+      <ng-container *ngFor="let message of conversation">
+        <div class="message" [ngClass]="{'message_from_me': message.uid === userDetails.uid, 'message_from_other': message.uid !== userDetails.uid}">
+          <div class="message_details">
+            <div class="user_details">
+              <span class="prenom">{{ message.prenom | uppercase}}</span>
+            </div>
+            <div class="message_content">
+              <span class="message_text">
+                <p>
+                  {{ message.msg }}
+                </p>
+          </span>
+            </div>
+            <div class="date_content">
+              <span class="date">{{ message.date  }}</span>
+              <span class="date">{{ message.hours }}</span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+    <div class="send_msg_container">
+    <form class="send_msg_form" (ngSubmit)="onSendMessage()" class="send_msg_form">
+      <div class="message_container">
+        <textarea name="newMessage" [(ngModel)]="newMessage" type="text" placeholder="Écrire un message..."></textarea>
+        <div class="submit_container">
+          <div class="submit_container">
+            <button #submitButton id="submit-button" style="display:none"></button>
+            <div (click)="triggerSubmit()"><img src="assets/SEND.svg"></div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+  </div>

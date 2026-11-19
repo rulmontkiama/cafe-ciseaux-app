@@ -1,0 +1,48 @@
+<div class="admin_dashboard">    
+    <div class="avatar" >
+        <img src="{{avatar }}"  class="profile_user_pictures" alt="profile_user_pictures">
+    </div>   
+    <div class="admin_interface">
+        <div class="name_row cut_angle">
+            <h2 *ngIf = 'this.nom' >{{nom | uppercase}}</h2>
+            <h2 *ngIf = 'this.prenom' >{{prenom | uppercase}}</h2>
+        </div>
+        <div class="nav_admin">
+            <div class="admin_rdv_bttn">
+                <a [routerLink]="['/admin', 'admin-rendez-vous']">
+                    <img src="assets/RDV_WHITE.svg"/>
+                </a>
+            </div>
+            <div class="admin_schedule_bttn">
+                <a [routerLink]="['/admin', 'admin-schedule']">
+                    <img src="assets/SCHEDULE_WHITE.svg"/>
+                </a>
+            </div>
+            <div class="admin_msg_bttn">
+                <a [routerLink]="['/admin', 'admin-message']">
+                    <img src="assets/MSG.svg"/>
+                </a>
+            </div>
+            <div class="admin_param_bttn">
+                <a [routerLink]="['/admin', 'admin-params']">
+                    <img src="assets/PARAM_WHEEL_WHITE.svg"/>
+                </a>
+            </div>
+            <div class="admin_beer">
+                <a [routerLink]="['/admin', 'admin-beers']">
+                    <img src="assets/BAR_WHITE.svg"/>
+                </a>
+            </div>
+            <div class="admin_users">
+                <a [routerLink]="['/admin', 'admin-users']">
+                    <img src="assets/USER.svg"/>
+                </a>
+            </div>
+            <div class="admin_rdv_management">
+                <a [routerLink]="['/admin', 'appointment-manager']">
+                    <img src="assets/MANAGE.svg"/>
+                </a>
+            </div>
+        </div>
+    </div>        
+</div>

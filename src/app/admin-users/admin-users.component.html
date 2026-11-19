@@ -1,0 +1,24 @@
+<div class="search-container">
+  <input
+    type="text"
+    placeholder="Rechercher un utilisateur..."
+    (input)="search($event)"
+  />
+</div>
+
+<ul class="adminList">
+  <li *ngFor="let user of users" class="user-card">
+    <div class="avatar">
+      <img [src]="user.avatar" alt="User Avatar" class="avatar-image" />
+    </div>
+    <div class="user-info">
+      <h2>{{ user.nom | uppercase }} {{ user.prenom | uppercase }}</h2>
+      <p><strong>Email:</strong> {{ user.email }}</p>
+      <p><strong>Scissor:</strong> {{ user.scissor }}</p>
+      <p><strong>UID:</strong> {{ user.uid }}</p>
+      <p><strong>Nombre total de rendez-vous:</strong> {{ user.rdvCount }}</p>
+    </div>
+  </li>
+</ul>
+
+<div *ngIf="loading" class="loading-spinner">Chargement...</div>

@@ -1,0 +1,200 @@
+<div class="admin_schedule_container">
+    <h1 class="mySchedule">MES HORAIRES</h1>
+    <div id="enable_days_RDV">
+        <h2>JOURS DE RDV</h2>
+        <ul class="enable_days_list">
+          <!-- Utilisez *ngFor pour parcourir daysWithIsBook et afficher chaque jour -->
+          <li *ngFor="let day of daysWithIsBook" [ngClass]="day.reservationClass">
+            <!-- Affichez le nom du jour -->
+            <p>{{ day.dayName }}</p>
+            <!-- Affichez le texte de réservation (Réservé ou Non réservé) -->
+            <div (click)="setReservationDay(day)" class="reservationBttn">
+                <p>{{ day.reservationStatus }}</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    <span  class="cut_angle">
+        <h2>BLOCKED DAYS</h2>       
+    </span>
+    <div class="calendar_month" [ngClass]="{'collapsed': collapsed}" (click)="collapsed = !collapsed">
+        <p>{{monthName | uppercase}}</p>
+    </div>
+
+      
+    <div class="month_selector" [@collapse]="collapsed">
+        <ul>
+            <li #parentMonth (click)="setCurrentMonth($event);collapsed = !collapsed"  [class.newstyle]="currentMonth === mn.toUpperCase() && monthStatus != false" id="{{mn | uppercase}}" class="month_block" *ngFor="let mn of monthNames" >
+            <p  (click)="parentMonth.click();$event.stopPropagation();" id="{{mn | uppercase}}">{{mn | uppercase}}</p> 
+            </li> 
+        </ul> 
+    </div>
+    <div  class="calendar_days">        
+        <div class="days_scroll"  >
+            <ul class="days_list" *ngFor="let n of monthDaysArray; let i = index;">
+                <li>
+                    <span #blockedDay 
+                    [class.blocked_day]="currentDay === (i+1) || blockedDaysArray[i] == true" 
+                    id="{{i+1}}" 
+                    (click)="setCurrentDay($event,i)"    
+                    drag-scroll-item 
+                    class="day_block" 
+                    *ngIf="closedDaysArray[i] != false && passedDaysArray[i] != true">
+                <p (click)="blockedDay.click();$event.stopPropagation()">{{monthDaysArray[i]}}</p> 
+                <p (click)="blockedDay.click();$event.stopPropagation()">{{this.monthDaysName[i] | uppercase}}</p> 
+              </span>          
+                </li>
+            </ul>        
+        </div>
+    </div>
+    <div class="blocked_days">
+        <ul >
+            <li *ngFor="let blockDay of blockDays" class="block_day_unit" id="block_day{{blockDay.id}}">
+                <div class="block_day_cont">
+                    <span class="block_day_text"><p>{{blockDay.dateFull}}</p></span>
+                    <span (click)="close_block_day(blockDay.id);" class="remove_block_day"  class="remove_block_day{{blockDay.id}}"><p>X</p></span>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <span  class="cut_angle">
+        <h2 class="mySchedule">HEURES D'OUVERTURE</h2>
+    </span>
+    
+    <div class="open_hours">
+        <ul class="open_hours_list">
+            <li *ngFor="let day of scheduleKeys" class="open_hours_unit">
+              <span  class="cut_angle">
+                <h3>{{ day | uppercase}}</h3>
+              </span>
+              <span *ngFor="let hour of schedule[day]">                
+                <div class="hours_settings">
+                    <span><h4>MATIN :</h4></span>
+                    <div class="hours_set_unit">
+                        <span><h5>OUVERTURE :</h5></span>
+                        <span class="hours_set_unit_open" id="hours_set_unit_open_{{day}}">
+                            <input 
+                                [ngClass]="{
+                                    'border-solid-white-1': hour.start1 !== '',
+                                    'border-solid-white-0-4': hour.start1 === ''
+                                }" 
+                                maxlength="2" 
+                                id="hours_morning_start1_{{day}}" 
+                                type="text" 
+                                [(ngModel)]="hour.start1.split(':')[0]" 
+                                (blur)="setSchedule('morning_start1_' + day)" 
+                                [disabled]="hour.start1 === ''"
+                            >
+                            <span class="separate">:</span>
+                            <input 
+                                [ngClass]="{
+                                    'border-solid-white-1': hour.start1 !== '',
+                                    'border-solid-white-0-4': hour.start1 === ''
+                                }" 
+                                maxlength="2" 
+                                id="minutes_morning_start1_{{day}}" 
+                                type="text" 
+                                [(ngModel)]="hour.start1.split(':')[1]" 
+                                (blur)="setSchedule('morning_start1_' + day)" 
+                                [disabled]="hour.start1 === ''"
+                            >
+                            <div (click)="toggleLock('morning_start1_' + day)"><img id="block_img_morning_start1_{{day}}" [src]="hour.start1 ? 'assets/BLOCKED.svg' : 'assets/BLOCKED_RED.svg'" [class.red]="!hour.start1 "/> </div>
+                        </span>   
+                        <span><h5>FERMETURE :</h5></span>                 
+                        <span class="hours_set_unit_closed" id="hours_set_unit_closed_{{day}}">
+                            <input 
+                                [ngClass]="{
+                                    'border-solid-white-1': hour.end1 !== '',
+                                    'border-solid-white-0-4': hour.end1 === ''
+                                }" 
+                                maxlength="2"
+                                id="hours_morning_end1_{{day}}" 
+                                type="text" 
+                                [(ngModel)]="hour.end1.split(':')[0]" 
+                                (blur)="setSchedule('morning_end1_' + day)" 
+                                [disabled]="hour.end1 === ''"
+                             >
+                            <span class="separate">:</span>
+                            <input 
+                                [ngClass]="{
+                                    'border-solid-white-1': hour.end1 !== '',
+                                    'border-solid-white-0-4': hour.end1 === ''
+                                }" 
+                                maxlength="2" 
+                                id="minutes_morning_end1_{{day}}" 
+                                type="text" 
+                                [(ngModel)]="hour.end1.split(':')[1]" 
+                                (blur)="setSchedule('morning_end1_' + day)" 
+                                [disabled]="hour.end1 === ''"
+                            >
+                            <div (click)="toggleLock('morning_end1_' + day)"><img id="block_img_morning_end1_{{day}}" [src]="hour.end1 ? 'assets/BLOCKED.svg' : 'assets/BLOCKED_RED.svg'" [class.red]="!hour.end1 "/> </div>
+                        </span>
+                    </div>
+                </div>
+                <div class="hours_settings">
+                    <span><h4>APRÈS MIDI :</h4></span>
+                    <div class="hours_set_unit">
+                        <span><h5>OUVERTURE :</h5></span>
+                        <span class="hours_set_unit_open">
+                            <input 
+                                [ngClass]="{
+                                    'border-solid-white-1': hour.start2 !== '',
+                                    'border-solid-white-0-4': hour.start2 === ''
+                                }" 
+                                maxlength="2" 
+                                id="hours_afternoon_start2_{{day}}" 
+                                type="text" 
+                                [(ngModel)]="hour.start2.split(':')[0]" 
+                                (blur)="setSchedule('morning_start2_' + day)" 
+                                [disabled]="hour.start2 === ''"
+                            >
+                            <span class="separate">:</span>
+                            <input  [ngClass]="{
+                                'border-solid-white-1': hour.start2 !== '',
+                                'border-solid-white-0-4': hour.start2 === ''
+                              }" 
+                              maxlength="2" 
+                              id="minutes_afternoon_start2_{{day}}" 
+                              type="text" 
+                              [(ngModel)]="hour.start2.split(':')[1]" 
+                              (blur)="setSchedule('morning_start2_' + day)" 
+                              [disabled]="hour.start2 === ''">
+                            <div (click)="toggleLock('afternoon_start2_' + day)"><img id="block_img_afternoon_start2_{{day}}"  src="assets/BLOCKED.svg" [src]="hour.start2 ? 'assets/BLOCKED.svg' : 'assets/BLOCKED_RED.svg'" [class.red]="!hour.start2 "/> </div>
+                        </span>               
+                        <span><h5>FERMETURE :</h5></span>   
+                        <span class="hours_set_unit_closed">
+                            <input 
+                                [ngClass]="{
+                                    'border-solid-white-1': hour.end2 !== '',
+                                    'border-solid-white-0-4': hour.end2 === ''
+                                }" 
+                                maxlength="2" 
+                                id="hours_afternoon_end2_{{day}}" 
+                                type="text" 
+                                [(ngModel)]="hour.end2.split(':')[0]" 
+                                (blur)="setSchedule('morning_end2_' + day)" 
+                                [disabled]="hour.end2 === ''"
+                            >
+                            <span class="separate">:</span>
+                            <input
+                                [ngClass]="{
+                                    'border-solid-white-1': hour.end2 !== '',
+                                    'border-solid-white-0-4': hour.end2 === ''
+                                }" 
+                                maxlength="2" 
+                                id="minutes_afternoon_end2_{{day}}" 
+                                type="text" 
+                                [(ngModel)]="hour.end2.split(':')[1]" 
+                                (blur)="setSchedule('morning_end2_' + day)" 
+                                [disabled]="hour.end2 === ''"
+                             >
+                            <div (click)="toggleLock('afternoon_end2_' + day)"><img id="block_img_afternoon_end2_{{day}}" [src]="hour.end2 ? 'assets/BLOCKED.svg' : 'assets/BLOCKED_RED.svg'" [class.red]="!hour.end2 "/></div>
+                        </span>
+                    </div>
+                </div>
+              </span>
+            </li>
+          </ul>
+    </div>
+</div>
+

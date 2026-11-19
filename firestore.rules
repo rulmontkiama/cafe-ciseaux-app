@@ -1,0 +1,145 @@
+rules_version = '2';
+
+// Règles de sécurité Firestore — Café-Ciseaux
+//
+// PRÉREQUIS : le document de la collection `admin` d'un administrateur doit avoir
+// pour ID son UID Firebase Auth (admin/<UID>), avec le champ { admin_id: "<UID>" }.
+// Les règles ne peuvent pas chercher un document par valeur de champ ; c'est l'ID
+// du document qui sert à reconnaître un admin. Voir FIREBASE_SETUP.md §4.2.
+//
+// Tout ce qui n'est pas explicitement autorisé ci-dessous est refusé.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Fonctions utilitaires ----------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admin/$(request.auth.uid));
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Champs modifiés entre l'ancienne et la nouvelle version du document
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // ---------- admin ----------
+    // Lecture : l'app liste la collection après connexion pour connaître les admins.
+    // Écriture : uniquement depuis la console Firebase (jamais depuis l'app).
+    match /admin/{id} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ---------- users ----------
+    // Un utilisateur lit son propre profil ; un admin lit tous les profils ;
+    // tout utilisateur connecté peut lire le profil d'un admin (messagerie).
+    match /users/{userId} {
+      allow read: if isOwner(resource.data.uid)
+        || isAdmin()
+        || (isSignedIn()
+            && exists(/databases/$(database)/documents/admin/$(resource.data.uid)));
+
+      // Création de son propre profil à l'inscription (compteur de ciseaux à 0).
+      allow create: if isAdmin()
+        || (isOwner(userId)
+            && request.resource.data.uid == userId
+            && request.resource.data.scissor == 0);
+
+      // Mise à jour : uid et email non modifiables ; compteur de ciseaux de 0 à 5.
+      allow update: if isAdmin()
+        || (isOwner(userId)
+            && !changedKeys().hasAny(['uid', 'email'])
+            && request.resource.data.scissor is number
+            && request.resource.data.scissor >= 0
+            && request.resource.data.scissor <= 5);
+
+      // Suppression de son propre compte (AuthenticationService.deleteAccount).
+      allow delete: if isAdmin() || isOwner(userId);
+    }
+
+    // ---------- rendez_vous ----------
+    // Lecture ouverte aux utilisateurs connectés : la page de réservation interroge
+    // tous les rendez-vous d'un jour/mois pour griser les créneaux déjà pris.
+    // Limite connue : nom, prénom et avatar des autres clients restent lisibles.
+    // Pour l'éviter, il faudrait une collection séparée de créneaux (date seule).
+    match /rendez_vous/{rdvId} {
+      allow read: if isSignedIn();
+
+      allow create: if isAdmin()
+        || (isOwner(request.resource.data.user_id)
+            && request.resource.data.keys().hasOnly(
+                 ['date', 'type', 'user_id', 'nom', 'prenom', 'scissor', 'avatar'])
+            && request.resource.data.keys().hasAll(
+                 ['date', 'type', 'user_id', 'nom', 'prenom', 'scissor'])
+            && request.resource.data.date is timestamp
+            && request.resource.data.type is string
+            && request.resource.data.scissor is number);
+
+      // Le propriétaire ne peut modifier que le compteur et l'avatar de ses rendez-vous.
+      allow update: if isAdmin()
+        || (isOwner(resource.data.user_id)
+            && changedKeys().hasOnly(['scissor', 'avatar']));
+
+      allow delete: if isAdmin() || isOwner(resource.data.user_id);
+    }
+
+    // ---------- horaires ----------
+    // Horaires d'ouverture affichés sur le site, y compris aux visiteurs non connectés.
+    match /horaires/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---------- blocked_days ----------
+    match /blocked_days/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ---------- beer-selection ----------
+    // Sélection de bières affichée publiquement.
+    match /beer-selection/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---------- messages ----------
+    // Seuls l'expéditeur et le destinataire lisent un message (admins compris :
+    // un admin ne voit que les messages qui lui sont adressés ou qu'il a envoyés).
+    match /messages/{msgId} {
+      allow read: if isSignedIn()
+        && (resource.data.from_id == request.auth.uid
+            || resource.data.to_id == request.auth.uid);
+
+      allow create: if isOwner(request.resource.data.from_id)
+        && request.resource.data.to_id is string
+        && request.resource.data.msg is string
+        && request.resource.data.msg.size() > 0
+        && request.resource.data.msg.size() <= 2000
+        && request.resource.data.is_read == false;
+
+      // Le destinataire peut seulement marquer un message comme lu.
+      allow update: if isOwner(resource.data.to_id)
+        && changedKeys().hasOnly(['is_read'])
+        && request.resource.data.is_read == true;
+
+      allow delete: if false;
+    }
+
+    // ---------- demo ----------
+    match /demo/{id} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+  }
+}

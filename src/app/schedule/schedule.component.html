@@ -1,0 +1,21 @@
+<div class="day_schedule_block">
+<div class="day_schedule" *ngFor="let day of days">
+    <div class="dayname_schedule">{{ day[0] }}</div>
+    <div *ngIf="day[1][0].start1.length > 0">
+        <div class="schedule_split">
+            <span>{{day[1][0].start1}}</span>-
+            <span>{{day[1][0].end1}}</span>
+        </div>
+        <div class="schedule_split" *ngIf="day[1][0].start2.length > 0">
+            <span>{{day[1][0].start2}}</span>-
+            <span>{{day[1][0].end2}}</span>
+        </div>
+    </div>
+    <div class="sunday" *ngIf="  day[1][0].start1.length <= 0">
+        <span >fermé</span>
+    </div>
+  </div>
+</div>
+  
+  
+  

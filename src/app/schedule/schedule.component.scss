@@ -1,0 +1,24 @@
+.day_schedule_block{
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    padding-top: 10vw;;
+}
+.dayname_schedule{
+    font-weight: 600;
+    margin: auto;
+}
+.day_schedule{
+    color: black;
+    padding-bottom: 2vw;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+}
+.sunday{
+    display: flex;
+    span{
+        margin: auto;
+    }
+   
+}

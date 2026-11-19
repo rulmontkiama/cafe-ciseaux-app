@@ -1,0 +1,145 @@
+$two-vw:2vw;
+$flex: flex;
+footer{
+    display: none;
+}
+.rdv_title{
+    margin-left: 3vw;
+}
+.newstyle,.select_day,.select_hour{
+    background-color: #45ff45;
+}
+.unavailable_hour{    
+    border: 0.35vw solid red;
+}
+.unavailable_hour:hover {
+    opacity: 1;
+  }
+  .unavailable_hour:before, .unavailable_hour:after {
+position: absolute;
+    left: 5vw;
+    content: " ";
+    top: 2.9vw;
+    height: 4vw;
+    width: 1vw;
+    margin: auto;
+    background-color: red;
+  }
+  .unavailable_hour:before {
+    transform: rotate(45deg);
+  }
+  .unavailable_hour:after {
+    transform: rotate(-45deg);
+  }
+.hour_list{
+    width: -webkit-fill-available;
+    display: flex;
+    flex-direction: row;
+}
+.hour_block,.minute_block{
+    position: relative;
+    font-size: 5vw;
+    padding-left: 4vw;
+    padding-right: 4vw;
+    padding-top: 3vw;
+    padding-bottom: 3vw;
+    display: $flex;
+    margin: auto;
+    max-height: 12vw;
+    border-radius: $two-vw;
+    p{margin: auto;}
+    .hour_list{
+        display: $flex;
+    }
+}
+.separation{
+    display: $flex;
+    padding-left: 4vw;
+    padding-right: 4vw;
+    p{
+        margin: auto;
+    }
+}
+.RDV_form{
+    display: $flex;
+    flex-direction: column;
+    margin-top: 14vw;
+}
+.connect{
+    margin-top: 2.5vw;
+}
+.select_hours{
+    color: white;
+    width: 90vw;
+    overflow: hidden;
+    margin: auto ;
+    font-size: 2.5vw;
+    justify-content: space-evenly;
+    display: $flex;
+    flex-direction: row;
+}
+.titleTime{
+    color: #ffffff;
+    margin-left: 3vw;
+}
+.RDV_container{
+    display: flex;
+    background-color: black;
+    width: 100vw;
+    flex-direction: column;
+    .calendar_year{
+        color: #ffffff;
+        display: flex;
+        margin: auto;
+        width: 80%;
+        padding-bottom: 1vw;
+        justify-content: space-between;
+        border-bottom: 0.5vw solid;
+        .yearSwitch{
+            background-color: #ffffff;
+            border-radius: 1vw;
+            color: #000000;
+            display: flex;
+            width: 12vw;
+            height: 12vw;
+
+            h2{
+                margin: auto;
+            }
+            p{
+                margin: auto;
+                font-size: 6vw;
+            }
+        }
+    }
+}
+.hours_scroll{
+    overflow: hidden;
+    overflow-x: auto;
+    position: relative;
+    min-width: 80vw; 
+    border-bottom: 0.35vw solid white !important;
+    border-top: 0.35vw solid white !important;
+    box-sizing: border-box !important;  
+}
+.hidden_input{
+   visibility: hidden;
+    display: none;
+}
+.drag-scroll-content{
+    display: $flex !important;
+}
+.cut_type{
+    margin-top: 5vw;
+    padding-bottom: 9vw;
+    display: $flex;
+}
+.cut_select{
+    font-family: Roboto, Helvetica, sans-serif;
+}
+.calendar_month{
+    p{
+        margin-top: 1vw;
+        margin-bottom: 1vw;
+    }
+}

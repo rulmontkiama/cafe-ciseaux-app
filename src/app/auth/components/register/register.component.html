@@ -1,0 +1,94 @@
+<div class = 'row m-0 w-100 register_container'>
+    <div class = 'col-md-4 offset-4 mt-5 register_block' *ngIf = '!this.isLogin'>
+        <img class="logo" src="assets/LOGO_CC_WHITE.svg" alt="cafe_ciseaux_logo" >
+        <span class="cut_angle">
+            <h2>REGISTER</h2>
+        </span>
+        <form [formGroup]="registerForm" (ngSubmit) = "onSubmit()" class="register_form">
+            
+            <!-- NOM -->
+            <span class="form_error">
+                <span *ngIf="submitted && registerForm.get('nom')?.errors?.['required']">
+                    <p>Veuillez entrer votre nom</p>  
+                </span>             
+            </span> 
+            <div class = 'form-group block_cyber'>
+                <label for="nom">NOM :</label>
+                <input class = 'form-control input_cyber' type = "text" name = "nom" placeholder = "nom" formControlName="nom">
+            </div>
+
+            <!-- PRENOM -->
+            <span class="form_error">
+                <span *ngIf="submitted && registerForm.get('prenom')?.errors?.['required']">
+                    <p>Veuillez entrer votre prenom</p>  
+                </span>             
+            </span> 
+            <div class = 'form-group block_cyber'>
+                <label for="prenom">PRÉNOM :</label>
+                <input class = 'form-control input_cyber' type = "text" name = "prenom" placeholder = "prenom" formControlName="prenom">
+            </div>
+
+            <!-- EMAIL -->
+            <span class="form_error">
+                <span *ngIf="submitted && registerForm.get('email')?.errors?.['required']">
+                    <p>Veuillez entrer un E-mail</p>  
+                </span>
+                <span *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.errors?.['invalidEmail']">
+                    <p>Veuillez entrer un E-mail valide</p>  
+                </span>             
+            </span>
+            <div class = 'form-group block_cyber'>
+                <label for="email">EMAIL :</label>
+                <input class = 'form-control input_cyber' type = "email" name = "email" placeholder = "Email" formControlName="email">
+            </div>
+
+            <!-- DATE DE NAISSANCE -->
+            <div class = 'form-group block_cyber'>
+                <label for="birthdate">DATE DE NAISSANCE :</label>
+                <input class = 'form-control input_cyber' type = "date" name = "birthdate" placeholder = "birthdate" formControlName="birthdate">
+            </div>
+
+            <!-- PASSWORD -->
+            <span class="form_error">
+                <span *ngIf="submitted && registerForm.get('password')?.errors?.['required']">
+                    <p>Veuillez entrer un mot de passe</p>  
+                </span>    
+                <span *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.errors?.['invalidPassword']">
+                    Le mot de passe doit contenir au minimum : <br>
+                    * 8 caractères <br>
+                    * 1 lettre majuscule<br> 
+                    * 1 lettre minuscule<br>
+                    * 1 nombre
+                </span>         
+            </span>
+            <div class = 'form-group block_cyber'>
+                <label for="password">MOT DE PASSE:</label>
+                <input class = 'form-control input_cyber' type = "password" name = "password" placeholder = "Password" formControlName="password">
+            </div>
+
+            <!-- CONFIRM PASSWORD -->
+            <span class="form_error">
+                <span *ngIf="submitted && registerForm.get('confirmPassword')?.errors?.['required']">
+                    <p>Veuillez confirmer votre mot de passe</p>  
+                </span>    
+                <span *ngIf="registerForm.get('confirmPassword')?.touched && registerForm.get('confirmPassword')?.errors?.['passwordMismatch']">
+                    Les mots de passe ne correspondent pas
+                </span>         
+            </span>           
+            <div class = 'form-group block_cyber'>
+                <label for="confirmPassword">CONFIRMER LE MOT DE PASSE:</label>
+                <input class = 'form-control input_cyber' type = "password" name = "confirmPassword" placeholder = "Password" formControlName="confirmPassword">
+            </div>
+
+            <input class= 'btn btn-outline-info register_bttn' type = "submit" value = "Register">
+            
+            <div class="forget_password" [routerLink] = "['/reset-password']">
+                <p>mot de passe oublié ?</p>
+            </div>
+        </form>
+    </div>
+    
+    <div class = 'col-md-4 offset-4 mt-5' *ngIf = 'this.isLogin'>
+        <h5>You are logged in</h5>
+    </div>
+</div>

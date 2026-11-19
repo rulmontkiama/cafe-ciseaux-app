@@ -1,0 +1,116 @@
+<div class="RDV_container">
+    <form  class="RDV_form" [formGroup]="rdvForm"  (ngSubmit) = "onSubmit()">
+    <span  class="cut_angle rdv_title">
+        <h2>RENDEZ VOUS</h2>       
+    </span>
+    <h2 class="titleTime">ANNÉE: </h2>
+    <div class="calendar_year">
+        <span (click)="decrementYear()"  class="yearSwitch yearSwitchLeft">
+            <p><</p>
+        </span>
+        <h2>{{year}}</h2>
+        <span  (click)="incrementYear()" class="yearSwitch yearSwitchRight">
+            <p>></p>
+        </span>
+    </div>
+    <h2 class="titleTime">MOIS: </h2>
+    <input class = 'form-control hidden_input'  type="number" name = "month" [(ngModel)]="monthNum" formControlName="month"  >
+    <div class="calendar_month" [ngClass]="{'collapsed': collapsed}" (click)="collapsed = !collapsed">
+        <p>{{monthName | uppercase}}</p>
+    </div>
+    <div class="month_selector" [@collapse]="collapsed">
+        <ul>
+            <li #parentMonth (click)="setCurrentMonthEvent($event);collapsed = !collapsed"  [class.newstyle]="monthName.toUpperCase() === mn.toUpperCase() && monthStatus != false" id="{{mn | uppercase}}" class="month_block" *ngFor="let mn of monthNames" >
+            <p  (click)="parentMonth.click();$event.stopPropagation();" id="{{mn | uppercase}}">{{mn | uppercase}}</p> 
+            </li> 
+        </ul> 
+    </div>
+<div class="calendar_days">
+    <h2 class="titleTime">JOUR : </h2>
+    
+    <span class="form_error">
+        <span *ngIf="submitted && f['day'].errors?.['required']">
+            <p>Veuillez choisir un jour valide</p>
+        </span>             
+    </span>         
+
+    <input class='form-control hidden_input' type="text" name="day" [(ngModel)]="currentDay" formControlName="day">
+    
+    <div class="days_scroll" 
+         #daysScroll
+         (touchstart)="handleTouchStart($event, 'days')" 
+         (touchmove)="handleTouchMove($event, 'days')">
+         
+        <ul class="days_list" *ngFor="let n of monthDaysArray; let i = index;">
+            <li>
+                <span #parentDay 
+                      [class.select_day]="currentDay === (i+1) && dayStatus != false" 
+                      id="{{i+1}}" 
+                      (click)="setCurrentDay($event, i)" 
+                      class="day_block" 
+                      *ngIf="closedDaysArray[i] != false && passedDaysArray[i] != true">
+                      
+                    <p (click)="parentDay.click();$event.stopPropagation()">
+                        {{monthDaysArray[i]}}
+                    </p> 
+                    <p (click)="parentDay.click();$event.stopPropagation()">
+                        {{ this.monthDaysName[i] | uppercase }}
+                    </p> 
+                </span>             
+            </li>
+        </ul>        
+    </div>
+</div>
+    <span class="form_error">
+        <span *ngIf="submitted && f['hours'].errors?.['required']">
+        <p >
+            Veuillez choisir une heure valide
+        </p>  
+        </span>             
+    </span> 
+    <h2 class="titleTime">HEURE : </h2>
+    <div class="select_hours">
+        <input class="form-control hidden_input" 
+            type="number" 
+            name="hours" 
+            formControlName="hours" 
+            [(ngModel)]="currentHours">
+
+        <div class="hours_scroll" 
+            #hoursScroll
+            (touchstart)="handleTouchStart($event, 'hours')" 
+            (touchmove)="handleTouchMove($event, 'hours')">
+            
+            <ul *ngIf="dayStatus" class="hour_list">          
+                <li *ngFor="let n of scheduleArray; let i = index;">
+                    <span #parentHours 
+                        class="hour_block" 
+                        (click)="toggleHour(i);" 
+                        [class.unavailable_hour]="availableArray[i] == true" 
+                        [class.select_hour]="currentHours == scheduleArray[i] && hourStatus != false">
+                        
+                        <p (click)="parentHours.click();$event.stopPropagation()">
+                            {{scheduleArray[i]}}
+                        </p> 
+                    </span>         
+                </li>    
+            </ul>       
+        </div>
+    </div>
+    <span class="form_error">
+    <span *ngIf="submitted && f['type'].errors?.['required']">
+        <p >
+            Veuillez choisir votre type de coupe
+        </p>  
+        </span>  
+        </span>
+    <div class="cut_type">
+        
+        <select  class="cut_select bttn_cyber" name="type" (change)="changeType($event)">
+            <option class="typeOption">-- TYPE DE COUPE --</option>
+            <option class="typeOption" *ngFor="let type of types" [ngValue]="type.name">{{type.name}}</option>
+        </select>
+    </div>
+    <button class= 'btn btn-outline-info connect bttn_cyber' type = "submit" value = "rdv">VALIDER</button>
+</form>
+</div>

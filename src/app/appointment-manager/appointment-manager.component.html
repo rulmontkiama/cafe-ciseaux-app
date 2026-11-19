@@ -1,0 +1,58 @@
+<div class="search-container">
+    <input
+      type="text"
+      placeholder="Rechercher un rendez-vous..."
+      (input)="search($event)"
+    />
+
+    <img (click)="toggleOrder()"  src="assets/sort.svg" > 
+</div>
+<ul class="RDV_list">
+    <li *ngFor="let rdv of rendezVous" class="rdvUnit" [attr.id]="'rdv-' + rdv.id" [ngClass]="{'has-passed': rdv.passed}">
+      <img *ngIf="rdv.passed" src="assets/BLOCKED.svg" class="passedImg">           
+  
+      <div *ngIf="!rdv.passed" class="RDV_delete">
+        <span id="{{rdv.id}}">
+          <img  data-id="{{rdv.id}}" (click)="removeRDV($event)" src="assets/DELETE.svg">   
+        </span>
+      </div>
+  
+      <div class="RDV_avatar">
+        <img [src]="rdv.avatar" class="profile_user_pictures" alt="profile_user_pictures">
+      </div>
+  
+      <div class="rdv_infos_container">
+        <div>                    
+          <div class="RDV_names cut_angle">
+            <h2>{{ rdv.nom | uppercase }}</h2>
+            <h2>{{ rdv.prenom | uppercase }}</h2>
+          </div> 
+  
+          <div class="RDV_left_list">
+            <div class="scissor_block">
+              <img src="assets/SCISSOR.svg">
+              <h1>{{ rdv.scissor }}</h1>
+            </div>
+            <div>
+              <p>{{ rdv.type | uppercase }}</p>
+            </div>
+          </div>
+        </div>
+      </div>           
+  
+      <div class="RDV_right_cont">
+        <div class="RDV_right_list cut_angle">
+          <div>
+            <p>{{ rdv.date.dateString  }}</p>
+          </div>
+          <div class="RDV_hours">
+            <p>{{ rdv.hours }}</p>
+          </div>
+        </div>
+      </div>     
+    </li>                       
+  </ul>
+  
+  <!-- Bouton pour charger plus de rendez-vous -->
+
+  

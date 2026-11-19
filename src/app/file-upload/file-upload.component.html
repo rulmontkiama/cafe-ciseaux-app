@@ -1,0 +1,20 @@
+<div class="wrapper">
+    <div class="file_upload_container">
+      <h2 class="cut_angle_black">PHOTO DE PROFILE</h2>
+      <br><br>
+      <div class="avatar_cont" *ngIf="avatar | async as url">
+        <img class="avatar_preview" src="{{url}}" />
+      </div>
+      <ngx-file-drop dropZoneLabel="Glissez et déposez des fichiers ici" 
+            (onFileDrop)="onFileDrop($event)" 
+            (onFileOver)="onFileOver($event)" 
+            (onFileLeave)="onFileLeave($event)">
+      <ng-template ngx-file-drop-content-tmp let-openFileSelector="openFileSelector">
+      <button type="button" (click)="openFileSelector()">Parcourir les fichiers</button>
+      </ng-template>
+      </ngx-file-drop>
+    </div>
+    <div class="file_upload_close" (click)="onClose()">
+        <p>X</p>
+    </div>
+</div>

@@ -1,0 +1,57 @@
+.login_block{
+    .demo_login{
+        color: deepskyblue;
+        display: flex;
+        padding-top: 4vw;
+        p{
+            margin: auto;
+        }
+    }
+    .login_form{
+        display: flex;
+        flex-direction: column;
+    }
+    display: flex;
+    flex-direction: column;
+    width: 67vw;
+    margin: auto;
+    margin-top: 11vh;
+    flex-direction: column;
+    .logo{
+        width: 44vw;
+        margin: auto;
+        margin-bottom: 8vw;
+    }
+       
+    .no_account{
+        display: flex;
+        flex-direction: column;
+        padding-top: 7vw;
+    }
+    button,.no_account span{
+        font-family: "alienleaguecond.ttf";
+        transition: background-color 0.35s ease;
+        cursor: pointer;
+        padding: 3vw 7vw;
+        margin: auto;  
+        border-color: white;
+        border-style: solid;
+        border-radius: 2vw;  
+    }
+    .connect{
+        margin:auto;
+    }
+    button{
+        background-color: #0c0c0c;
+        color: white;  
+    }.no_account p{
+        padding-bottom: 4vw;
+        margin: auto;
+        color: white;
+    }
+    .no_account span{
+        background-color:white;
+        color: #0c0c0c;   
+    }
+
+}

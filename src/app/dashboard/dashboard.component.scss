@@ -1,0 +1,49 @@
+.admin_dashboard{
+    display: flex;
+    flex-direction: row;
+    margin: auto;
+    .admin_interface{
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .avatar{
+        position: relative;
+        display: none;
+        width: 23vw;
+        border: 0.5vw solid white;
+        height: 23vw;
+        overflow: hidden;
+    }
+    .profile_user_pictures{
+        width: -webkit-fill-available;
+        margin: auto;
+    }
+    .name_row{
+        display: none;
+        flex-direction: row;
+        background-color: white;
+        margin-left: 3vw;
+        h2{
+            color:#0c0c0c;
+        }
+        h2:nth-child(1){
+            padding-right: 2vw;
+        }    
+        
+    }
+    .nav_admin{
+        margin-left: 3vw;
+        display: flex;
+        a{
+            color: white;
+        }
+        img{
+            height: 4vw;
+            padding-right: 3vw;
+
+        }
+        
+    }
+}
+

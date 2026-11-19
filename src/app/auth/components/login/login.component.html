@@ -1,0 +1,50 @@
+<div class = 'row m-0 w-100'>
+    <div class = 'col-md-4 offset-4 mt-5 login_block' >
+        <img class="logo" src="assets/LOGO_CC_WHITE.svg" alt="cafe_ciseaux_logo" >
+        <span class="cut_angle">
+            <h2>LOGIN</h2>
+        </span>        
+        <form class="login_form" [formGroup]="loginForm"  (ngSubmit) = "onSubmit()"  class="login_form">     
+            <span class="form_error">
+                <span *ngIf="submitted && loginForm.controls.password.errors?.['required'] ">
+                <p>
+                    Veuillez entrer votre mot de passe
+                </p>  
+                </span>            
+            </span> 
+            <span class="form_error">
+                <span *ngIf="submitted && loginForm.controls.email.errors?.['required'] ">
+                <p>
+                    Veuillez entrer un E-mail
+                </p>  
+                </span>
+                <span *ngIf="loginForm.controls.email.touched  && loginForm.controls.email.errors?.['invalidEmail']" >
+                    <p>
+                        Veuillez entrer un E-mail valide
+                    </p>  
+                    </span>             
+            </span>
+            <div class = 'form-group block_cyber'>
+                <label for="email">EMAIL :</label>
+                <input class = 'form-control input_cyber' type = "email" name = "email" placeholder = "Email" formControlName="email">
+            </div>   
+            <div class = 'form_group block_cyber'>
+                <label for="PASSWORD">PASSWORD :</label>
+                <input class = 'form-control input_cyber' type = "password" name = "password" placeholder = "Password" formControlName="password">
+            </div>           
+            <button class= 'btn btn-outline-info connect' type = "submit" value = "Login">CONNECT</button>
+            <div class="forget_password" [routerLink] = "['/reset-password']">
+                <p>mot de passe oublié ?</p>
+            </div>
+            <div class="demo_login" [routerLink] = "['/login-demo']">
+                <p>DEMO LOGIN</p>
+            </div>
+        </form>
+        <div class="no_account">
+            <p>vous n'êtes pas encore inscrit ?</p>
+            <span  class="register_bttn">
+                <a [routerLink] = "['/register']" routerLinkActive = "active">REGISTER</a>                
+            </span>
+        </div>
+    </div>
+</div>
