@@ -14,6 +14,8 @@ interface Environment {
     appId: string;
     measurementId: string;
   };
+  // Firebase Storage (photos de profil et images de bières) : false tant que Storage n'est pas activé
+  useStorage: boolean;
   // Compte de démonstration (optionnel). Laisser vide pour désactiver le "DEMO LOGIN".
   demo: {
     email: string;
@@ -26,18 +28,17 @@ interface Environment {
 export const environment: Environment = {
   production: false,
   imagePath: '/assets',
-  // TODO: CONFIG TEMPORAIRE (factice) uniquement pour afficher l'interface en local.
-  // À remplacer par la vraie config de ton projet Firebase (voir FIREBASE_SETUP.md).
   firebase: {
-    apiKey: "demo-api-key",
-    authDomain: "demo-cafe-ciseaux.firebaseapp.com",
-    projectId: "demo-cafe-ciseaux",
-    storageBucket: "demo-cafe-ciseaux.appspot.com",
-    messagingSenderId: "000000000000",
+    apiKey: "AIzaSyAtfPGP0-rGS-Eh1J1QLMaQTQuVjBXpYEA",
+    authDomain: "cafe-ciseaux-e342d.firebaseapp.com",
+    projectId: "cafe-ciseaux-e342d",
+    storageBucket: "cafe-ciseaux-e342d.firebasestorage.app",
+    messagingSenderId: "406207272951",
     firebaseStorageDownloadTokens: "",
-    appId: "1:000000000000:web:0000000000000000",
-    measurementId: ""
+    appId: "1:406207272951:web:b939c4a1759cf85b3900f2",
+    measurementId: "G-MKWR92181W"
   },
+  useStorage: false,
   demo: {
     email: "",
     password: ""

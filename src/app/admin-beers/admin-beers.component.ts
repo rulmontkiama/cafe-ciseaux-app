@@ -4,7 +4,7 @@ import { BeersService } from '../services/beers.service';
 import { Beer } from '../models/beer.model'; 
 import { FileUploadService } from '../services/file-upload-service.service';
 
-import { log } from 'console';
+import { environment } from 'src/environments/environment';
 @Component({
   selector: 'app-admin-beers',
   templateUrl: './admin-beers.component.html',
@@ -13,6 +13,8 @@ import { log } from 'console';
 export class AdminBeersComponent implements OnInit {
   public allBeers: any // Utilisez le type Beer pour typer allBeers
   selectedFile: File | null = null; // Initialiser avec null
+  // Sans Firebase Storage, la bière est ajoutée avec une URL d'image saisie (ou l'image par défaut)
+  useStorage = environment.useStorage;
   constructor(
     private beersService: BeersService,    
     @Inject(AngularFireStorage) private storage: AngularFireStorage, 
@@ -120,6 +122,11 @@ onFileDrop(files: NgxFileDropEntry[]): void {
 
 // Fonction pour télécharger la bière avec les détails renseignés
 uploadBeer(): void {
+  if (!environment.useStorage) {
+    this.imageUrl = this.imageUrl.trim() || 'assets/BIERES.jpg';
+    this.addBeer();
+    return;
+  }
   if (!this.selectedFile) {
     console.log('Veuillez sélectionner un fichier.');
     return;

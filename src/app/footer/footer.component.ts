@@ -19,8 +19,8 @@ export class FooterComponent {
     this.contactDetails = this.cafeCiseauxService.getContactDetails();
     this.contactDetails[0].nameComplete = this.contactDetails[0].name+'  '+this.contactDetails[0].surname
     this.contactDetails[0].adressComplete  = this.contactDetails[0].street+'  '+this.contactDetails[0].city+' '+this.contactDetails[0].zip_code
-    this.uid= this.authService.getUserInfos().uid 
-    console.log(this.uid);
+    // getUserInfos() est null tant que personne n'est connecté
+    this.uid = this.authService.getUserInfos()?.uid ?? null;
     
   }
   viewSchedule() {

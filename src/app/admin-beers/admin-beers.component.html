@@ -4,7 +4,8 @@
       <textarea id="beerDescription" placeholder="Description de la bière" [(ngModel)]="beerDescription"></textarea>
       
     <!-- Custom file input button -->
-    <div class="custom-file-input">
+    <input *ngIf="!useStorage" type="text" placeholder="URL de l'image (optionnel)" id="beerImageUrl" [(ngModel)]="imageUrl">
+    <div class="custom-file-input" *ngIf="useStorage">
         <button type="button" (click)="fileInput.click()">Parcourir les fichiers</button>
         <input type="file" #fileInput style="display: none;" (change)="onFileSelected($event)">
     </div>

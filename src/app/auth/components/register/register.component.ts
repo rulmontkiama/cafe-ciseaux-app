@@ -29,6 +29,7 @@ export class RegisterComponent implements OnInit {
       nom: ['', Validators.required],
       prenom: ['', Validators.required],
       email: ['', Validators.compose([Validators.required, this.customValidator.emailValidator()])],
+      birthdate: [''],
       password: ['', Validators.compose([Validators.required, this.customValidator.patternValidator()])],
       confirmPassword: ['', Validators.required],
     }, {
@@ -41,6 +42,19 @@ export class RegisterComponent implements OnInit {
   get email() { return this.registerForm.get('email'); }
   get password() { return this.registerForm.get('password'); }
   get confirmPassword() { return this.registerForm.get('confirmPassword'); }
+
+  // Connexion / inscription avec Google ou Apple
+  async socialLogin(provider: 'google' | 'apple') {
+    try {
+      await this.authService.loginWithProvider(provider);
+      this._toast.showSucces('LOGIN', 'vous êtes connecté');
+    } catch (error) {
+      const message = this.authService.socialLoginErrorMessage(error);
+      if (message) {
+        this._toast.showError('CONNEXION', message);
+      }
+    }
+  }
 
   async onSubmit() {
     this.submitted = true;

@@ -6,9 +6,10 @@ import { Users } from '../models/users';
 import { UsersService } from './users.service';
 import { AdminService } from './admin.service';
 import { Buffer } from 'buffer';
+import { environment } from 'src/environments/environment';
 const crypto = require('crypto-browserify');
 import * as jwt from 'jsonwebtoken';
-import * as auth from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/compat/firestore';
 import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { Observable, firstValueFrom } from 'rxjs';
@@ -165,25 +166,88 @@ export class AuthenticationService {
         window.alert(error);
       });
   }
-  // Returns true when user is looged in and email is verified
-  // Sign in with Google
-  GoogleAuth() {
-    return this.AuthLogin(new auth.GoogleAuthProvider()).then((res: any) => {
-      this.router.navigate(['dashboard']);
-    });
+  /**
+   * Connexion avec Google ou Apple (fenêtre popup Firebase).
+   * Crée le profil Firestore au premier passage, puis charge la session locale.
+   * Retourne true si connecté ; rejette avec l'erreur Firebase (ou PROFILE_NOT_FOUND,
+   * SOCIAL_NOT_SUPPORTED_NATIVE) sinon : voir socialLoginErrorMessage().
+   */
+  async loginWithProvider(providerName: 'google' | 'apple'): Promise<boolean> {
+    // Dans l'app mobile (WebView), Google refuse les popups et Apple exige un plugin natif
+    if (Capacitor.isNativePlatform()) {
+      throw new Error('SOCIAL_NOT_SUPPORTED_NATIVE');
+    }
+    let provider: any;
+    if (providerName === 'google') {
+      provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+    } else {
+      provider = new firebase.auth.OAuthProvider('apple.com');
+      provider.addScope('email');
+      provider.addScope('name');
+    }
+    const result: any = await this.afAuth.signInWithPopup(provider);
+    const user = result?.user;
+    if (!user) {
+      return false;
+    }
+    await this.ensureSocialProfile(user);
+    const ok = await this.hydrateSession(user);
+    if (!ok) {
+      await this.afAuth.signOut();
+      throw new Error('PROFILE_NOT_FOUND');
+    }
+    this.router.navigate(['profile']);
+    return true;
   }
-  // Auth logic to run auth providers
-  AuthLogin(provider: any) {
-    return this.afAuth
-      .signInWithPopup(provider)
-      .then((result) => {
-        this.router.navigate(['profile']);
-        this.SetUserData(result.user);
-      })
-      .catch((error) => {
-        window.alert(error);
-      });
+  /** Crée users/<uid> s'il n'existe pas (nom et prénom tirés du nom affiché du compte). */
+  private async ensureSocialProfile(user: any): Promise<void> {
+    const existing = await this.usersService.getUser(user.uid);
+    if (existing && existing[0]) {
+      return;
+    }
+    const parts = (user.displayName || '').trim().split(/\s+/).filter(Boolean);
+    // Apple ne fournit pas toujours le nom : on prend alors le début de l'e-mail
+    const prenom = parts[0] || (user.email || '').split('@')[0] || '';
+    const nom = parts.slice(1).join(' ');
+    const userData: Users = {
+      uid: user.uid,
+      email: user.email || '',
+      nom: nom.toLowerCase(),
+      prenom: prenom.toLowerCase(),
+      birthdate: '',
+      scissor: 0,
+      avatar: user.photoURL || 'assets/AVATAR.svg',
+    };
+    await this.db.doc(`users/${user.uid}`).set(userData);
   }
+  /** Message à afficher pour une erreur de connexion Google/Apple, ou null s'il faut rester silencieux. */
+  socialLoginErrorMessage(error: any): string | null {
+    switch (error?.code) {
+      case 'auth/popup-closed-by-user':
+      case 'auth/cancelled-popup-request':
+        return null; // l'utilisateur a fermé la fenêtre : pas une erreur
+      case 'auth/popup-blocked':
+        return 'la fenêtre de connexion a été bloquée par le navigateur, autorisez les popups pour ce site';
+      case 'auth/account-exists-with-different-credential':
+        return "un compte existe déjà avec cet e-mail : connectez-vous avec votre mot de passe ou avec l'autre méthode";
+      case 'auth/operation-not-allowed':
+        return "cette méthode de connexion n'est pas activée";
+      case 'auth/unauthorized-domain':
+        return "ce site n'est pas autorisé dans Firebase (Authentication > Paramètres > Domaines autorisés)";
+      case 'auth/network-request-failed':
+        return 'vérifiez votre connexion internet';
+    }
+    if (error?.message === 'PROFILE_NOT_FOUND') {
+      return "votre compte n'a pas de profil, contactez le salon";
+    }
+    if (error?.message === 'SOCIAL_NOT_SUPPORTED_NATIVE') {
+      return "la connexion Google/Apple n'est pas encore disponible dans l'application mobile, utilisez votre e-mail";
+    }
+    console.error(error);
+    return 'connexion impossible, réessayez';
+  }
+
     /* Setting up user data when sign in with username/password, 
   sign up with username/password and sign in with social auth  
   provider in Firestore database using AngularFirestore + AngularFirestoreDocument service */
@@ -199,7 +263,7 @@ export class AuthenticationService {
       email: user.email,
       nom: user.nom,
       prenom: user.prenom,
-      birthdate: '1990-05-12',
+      birthdate: user.birthdate || '',
       scissor: 0,
       avatar: user.avatar,
     };
@@ -213,12 +277,15 @@ export class AuthenticationService {
     try {
       const result: any = await this.afAuth.createUserWithEmailAndPassword(email, password);
       const user = result.user;
-      // Avatar par défaut : si le fichier manque dans Storage, on inscrit quand même l'utilisateur
-      let avatarUrl = '';
-      try {
-        avatarUrl = await firstValueFrom(this.storage.ref('images/AVATAR.svg').getDownloadURL());
-      } catch (e) {
-        console.warn('images/AVATAR.svg introuvable dans Firebase Storage : inscription sans avatar', e);
+      // Avatar par défaut : image locale de l'app (assets/AVATAR.svg). Si Firebase Storage est activé
+      // (environment.useStorage), on utilise plutôt celle de Storage, avec l'image locale en secours.
+      let avatarUrl = 'assets/AVATAR.svg';
+      if (environment.useStorage) {
+        try {
+          avatarUrl = await firstValueFrom(this.storage.ref('images/AVATAR.svg').getDownloadURL());
+        } catch (e) {
+          console.warn('images/AVATAR.svg introuvable dans Firebase Storage : avatar local utilisé', e);
+        }
       }
       registerForm.avatar = avatarUrl;
       registerForm.uid = user.uid;

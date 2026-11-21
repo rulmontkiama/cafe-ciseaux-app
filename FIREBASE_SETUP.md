@@ -58,7 +58,11 @@ firebase: {
 
 ---
 
-## 3. Prérequis critique : Firebase Storage
+## 3. Firebase Storage (optionnel pour l'instant)
+
+> **Mode sans Storage (actuel)** : `useStorage: false` dans `src/environments/environment.ts` et `environment.prod.ts`. Les nouveaux comptes reçoivent l'avatar local `assets/AVATAR.svg`, le changement de photo de profil est désactivé, et l'admin ajoute les bières avec une URL d'image (ou l'image par défaut). Pour activer Storage plus tard : crée-le dans la console (forfait Blaze), mets `useStorage: true`, téléverse `images/AVATAR.svg` et déploie `storage.rules`.
+
+### Prérequis si Storage est activé
 
 Lors de l'inscription d'un nouvel utilisateur (`AuthenticationService.signUp`), l'application va chercher l'avatar par défaut dans Firebase Storage au chemin exact :
 

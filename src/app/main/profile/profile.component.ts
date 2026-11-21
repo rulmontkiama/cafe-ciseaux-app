@@ -69,6 +69,10 @@ export class ProfileComponent implements OnInit {
     this.avatar =  avatar 
   }
   changeAvatar() {
+    if (!environment.useStorage) {
+      this._toast.showWarning('PHOTO DE PROFIL', "le changement de photo n'est pas disponible pour le moment");
+      return;
+    }
     this.avatarBool= !this.avatarBool; 
   }
   logout(){

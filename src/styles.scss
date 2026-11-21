@@ -589,3 +589,41 @@ app-file-upload{
     min-width: 35vw !important;
   }
 }
+/* Boutons de connexion Google / Apple (pages login et register) */
+.social_login {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 3vw;
+    padding-top: 6vw;
+    .social_or {
+        margin: auto;
+        color: white;
+        text-transform: uppercase;
+    }
+    .social_btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.8em;
+        width: 100%;
+        font-family: "alienleaguecond.ttf";
+        cursor: pointer;
+        padding: 3vw 4vw;
+        border: 1px solid white;
+        border-radius: 2vw;
+        svg {
+            width: 1.3em;
+            height: 1.3em;
+            flex: none;
+        }
+        &.google {
+            background-color: white;
+            color: #0c0c0c;
+        }
+        &.apple {
+            background-color: #0c0c0c;
+            color: white;
+        }
+    }
+}

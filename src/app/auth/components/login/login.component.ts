@@ -32,6 +32,18 @@ export class LoginComponent implements OnInit {
   get password() {
     return this.loginForm.get('password');
   }
+  // Connexion avec Google ou Apple
+  async socialLogin(provider: 'google' | 'apple') {
+    try {
+      await this.authService.loginWithProvider(provider);
+      this._toast.showSucces('LOGIN','vous êtes connecté')
+    } catch (error) {
+      const message = this.authService.socialLoginErrorMessage(error);
+      if (message) {
+        this._toast.showError('CONNEXION', message);
+      }
+    }
+  }
   onSubmit() {
     this.submitted = true;
     var that = this;
