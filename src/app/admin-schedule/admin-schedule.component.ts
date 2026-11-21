@@ -7,7 +7,6 @@ import { ScheduleService } from '../services/schedule.service';
 import { MyHammerConfig } from 'src/app/config/my-hammer-config';
 import { weekdays } from 'src/app/models/weekdays.model';
 import { AlertService } from '../services/alert.service';
-import { log } from 'console';
 @Component({
   selector: 'app-admin-schedule',
   templateUrl: './admin-schedule.component.html',
@@ -60,7 +59,6 @@ export class AdminScheduleComponent {
   monthsLong:any 
   async ngOnInit() { 
     await this.scheduleService.getAllBlocked().subscribe(blockDays=> {
-      console.log(blockDays)
       this.blockDays = blockDays
       for (const k in this.blockDays) {          
         this.blockDays[k].date = new Date (this.blockDays[k].date.seconds * 1000) 
@@ -69,7 +67,6 @@ export class AdminScheduleComponent {
         let blockDay= this.blockDays[k].date.getDate()
         this.blockDays[k].dateFull = blockYear+' - '+blockMonth+' - '+blockDay
         this.blockDays[k].id = blockYear+'_'+blockMonth+'_'+blockDay 
-        console.log(this.blockDays[k].dateFull)
       }     
    });
     this.monthNames = monthNames
@@ -104,12 +101,10 @@ export class AdminScheduleComponent {
     this.dayName = 'lun'
     this.scheduleService.getSchedule().subscribe((schedule) => {
       this.schedule = schedule[0];
-      console.log(this.schedule);
       
       this.scheduleKeys = Object.keys(this.schedule).sort((a, b) => {
         return this.weekdays.indexOf(a) - this.weekdays.indexOf(b);
       });
-      console.log(this.scheduleKeys);
 
       // Parcourir chaque clé pour extraire le nom du jour et isBook correspondant
       this.daysWithIsBook = this.scheduleKeys.map((day) => ({
@@ -131,7 +126,6 @@ export class AdminScheduleComponent {
   }
   // Méthode pour déterminer le texte de réservation en fonction de isBook
   getReservationStatus(isBook: boolean): string {
-    console.log(isBook);
     
     return isBook ? 'Réservé' : 'Non réservé';
   }
@@ -169,7 +163,6 @@ export class AdminScheduleComponent {
     const target = event.target as HTMLTextAreaElement;
     this.dayChoose = Number(target.id);
     this.dayName = this.dayNames[this.dayNum]     
-    console.log(this.schedule)
       this.daySchedule = this.schedule[this.dayName]
       if(this.currentDay != this.dayChoose){ 
         this.currentDay = this.dayChoose
@@ -198,14 +191,12 @@ export class AdminScheduleComponent {
   }
   getScheduleHours(){
     if (this.schedule) {
-      console.log(this.schedule)
       return this.schedule
     }
   }
 
   setDays(){  
     var daySchedule
-    console.log(this.schedule)
     for (let i = 1; i <= this.monthDaysArray.length; i++) {
       var firstDate = new Date(this.year, this.monthNum, i);
       firstDate.setDate( firstDate.getDate() ); 
@@ -293,7 +284,6 @@ numSequence() {
   }
   setSchedule(id:any){
     const day = id.split("_")[2]
-    console.log(day);
     
     const key = id.split("_")[1]
     var setValue

@@ -24,10 +24,6 @@
       "dom"
     ],
     "useDefineForClassFields": false,
-    "paths" : {
-      "crypto": ["./node_modules/crypto-browserify"],
-      "stream": ["./node_modules/stream-browserify"],
-    },
   },
   
   "angularCompilerOptions": {

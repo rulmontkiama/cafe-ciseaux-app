@@ -65,9 +65,11 @@ export class RendezVousComponent implements OnInit, OnDestroy {
     private scheduleService: ScheduleService,
     ) { 
   }
+  private hoursSubscription?: Subscription;
   ngOnDestroy(): void {
-    // Rien à nettoyer. (Avant : "throw new Error('Method not implemented.')" cassait
-    // la navigation à chaque sortie de la page, y compris juste après une réservation.)
+    // Ferme l'écouteur Firestore des heures prises. (Avant : "throw new Error('Method not implemented.')"
+    // cassait la navigation à chaque sortie de la page, y compris juste après une réservation.)
+    this.hoursSubscription?.unsubscribe();
   }
   monthName!: string; // NOM DU COURANT MOIS OU SLECTIONNÉ EN MAJUSCULE
   monthNames: any;
@@ -101,7 +103,6 @@ export class RendezVousComponent implements OnInit, OnDestroy {
   containerDays!:any;
   containerHours!:any;
   async ngOnInit() {   
-    console.log('slim!');
         
     this.userDetails = this.authService.getUserInfos();
     this.avatar = this.userDetails?.avatar;
@@ -384,12 +385,9 @@ export class RendezVousComponent implements OnInit, OnDestroy {
 
 
 constructDate() {
-  console.log(this.rdvForm.value.year);
-  console.log(this.year);
   
   const year = this.year
   const month = parseInt(this.rdvForm.value.month, 10) + 1; // 1 = janvier, 12 = décembre
-  console.log(month);
   
   const day = parseInt(this.rdvForm.value.day, 10);
   const [hours, minutes] = this.rdvForm.value.hours.split(':').map(Number);
@@ -403,7 +401,6 @@ constructDate() {
   // 2. Convertit en UTC pour Firestore
   const futureDateUTC = parisDateTime.toUTC().toJSDate();
 
-  console.log('Date UTC à stocker dans Firestore:', futureDateUTC);
 
   return futureDateUTC;
 }
@@ -450,7 +447,6 @@ decrementYear() {
 }
 
   setDays(){  
-    console.log('baka');
     
     var daySchedule
     this.schedule = this.getScheduleHours()
@@ -591,21 +587,19 @@ async getAvailableHours(){
   (this.dayChoose < 10 ? '0' : '') + this.dayChoose;
 
   
-  await this.rendez_vous.available_date(current_date).subscribe(availableDate=> {
-   this.available_date = availableDate
-   for (let i = 0; i <= this.scheduleArray.length - 1; i++) {
-      this.availableArray.push(false)  
-      let foundMatch = false // on initialise la variable indiquant si une égalité a été trouvée  
-      for (let k = 0; k < this.available_date.length && !foundMatch; k++) { // on continue la boucle tant qu'aucune égalité n'a été trouvée
-        // Même fuseau (Europe/Paris) et même format (HH:mm) que les créneaux générés
-        let HM = DateTime.fromSeconds(this.available_date[k].date.seconds, { zone: 'Europe/Paris' }).toFormat('HH:mm')
-                
-        if (this.scheduleArray[i] == HM) {
-          this.availableArray[i] = true
-          foundMatch = true // on a trouvé une égalité, on peut arrêter la boucle
-        }
-      }
-    }
+  // Un seul écouteur à la fois : celui du jour précédent est fermé avant d'ouvrir le nouveau
+  // (avant, chaque clic en laissait un ouvert, et les anciens jours écrasaient les heures affichées).
+  this.hoursSubscription?.unsubscribe();
+  const slots: string[] = this.scheduleArray;
+  this.hoursSubscription = this.rendez_vous.available_date(current_date).subscribe(availableDate=> {
+    this.available_date = availableDate
+    // Heures déjà prises ce jour-là, même fuseau (Europe/Paris) et même format (HH:mm) que les créneaux
+    const taken = new Set<string>(
+      availableDate.map((rdv:any) =>
+        DateTime.fromSeconds(rdv.date.seconds, { zone: 'Europe/Paris' }).toFormat('HH:mm'))
+    );
+    // Le tableau est reconstruit d'un bloc (pas de push progressif qui s'accumulait à chaque mise à jour)
+    this.availableArray = slots.map(hour => taken.has(hour));
   });
   /*
   Notez que nous avons ajouté une variable foundMatch initialisée à false 

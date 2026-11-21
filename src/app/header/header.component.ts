@@ -1,4 +1,5 @@
-import { Component, OnInit} from '@angular/core';
+import { Component, OnDestroy, OnInit} from '@angular/core';
+import { Subscription } from 'rxjs';
 import { AuthenticationService } from 'src/app/services/authentication.service';
 import { UsersService } from '../services/users.service';
 import { MessageService } from '../services/message.service';
@@ -7,7 +8,7 @@ import { MessageService } from '../services/message.service';
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss'],
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent implements OnInit, OnDestroy {
   isUserLoggedIn: boolean = false
   isFixedNavbar:boolean = false;
   public avatar!:string;
@@ -30,28 +31,38 @@ export class HeaderComponent implements OnInit {
       this.msgCount = 0
       this.scissor = 0
   }
+  // Écouteurs Firestore du profil et des messages non lus : fermés à la déconnexion,
+  // au changement de compte et à la destruction du composant (avant : ils s'empilaient).
+  private authSub?: Subscription;
+  private liveSub?: Subscription;
   ngOnInit() {
-    this.authService.authState$.subscribe(async (user:any) => {
+    this.authSub = this.authService.authState$.subscribe((user:any) => {
+      this.liveSub?.unsubscribe();
       this.isUserLoggedIn = !!user;
-      if (this.isUserLoggedIn) {
-        const uid = user.uid;
-        this.user_service.userObserve(uid).subscribe((users) => {
-          this.userData = users;
-          for (const k in this.userData) {
-            this.avatar = this.userData[k].avatar;
-            this.scissor = this.userData[k].scissor;
-            this.uid = this.userData[k].uid;
-            this.nom = this.userData[k].nom;
-            this.prenom = this.userData[k].prenom;
-          }
-        });
-        await this.msgService
-          .getUnreadMessageCount(uid)
-          .subscribe((msgCount) => {
-            this.msgCount = msgCount;
-          });
+      if (!user) {
+        this.msgCount = 0;
+        this.scissor = 0;
+        return;
       }
+      this.liveSub = new Subscription();
+      this.liveSub.add(this.user_service.userObserve(user.uid).subscribe((users) => {
+        const profile = users && users[users.length - 1];
+        if (profile) {
+          this.avatar = profile.avatar;
+          this.scissor = profile.scissor;
+          this.uid = profile.uid;
+          this.nom = profile.nom;
+          this.prenom = profile.prenom;
+        }
+      }));
+      this.liveSub.add(this.msgService.getUnreadMessageCount(user.uid).subscribe((msgCount) => {
+        this.msgCount = msgCount;
+      }));
     });
+  }
+  ngOnDestroy() {
+    this.authSub?.unsubscribe();
+    this.liveSub?.unsubscribe();
   }
   isAdmin() {
     const adminId = this.authService.getAdminId();

@@ -10,6 +10,5 @@ export class VerifyEmailComponent implements OnInit {
     public authService: AuthenticationService 
   ) { }
   ngOnInit() {
-    console.log(this.authService.userData)
   }
 }

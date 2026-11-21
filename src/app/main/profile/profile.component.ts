@@ -65,7 +65,6 @@ export class ProfileComponent implements OnInit {
     this.uploadBool = upload;    
   }
   avatarChangedHandler(avatar: any) {
-    console.log(avatar)
     this.avatar =  avatar 
   }
   changeAvatar() {
@@ -80,12 +79,10 @@ export class ProfileComponent implements OnInit {
     this._toast.showSucces('vous êtes déconnecté','logout')
   }
   deleteAccount(): void {
-    console.log('Fonction supprimerCompte() appelée.');
     this.authService.deleteAccount(this.uid )
     // Ajoutez ici la logique réelle pour supprimer le compte
   }
   changePassword(): void {
-    console.log('Fonction supprimerCompte() appelée.');
     // Ajoutez ici la logique réelle pour supprimer le compte
   }
 }

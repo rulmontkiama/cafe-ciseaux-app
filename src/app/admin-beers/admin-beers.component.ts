@@ -31,7 +31,6 @@ export class AdminBeersComponent implements OnInit {
       const input = event.target as HTMLInputElement;
       if (input.files && input.files.length > 0) {
         this.selectedFile = input.files[0];
-        console.log('Fichier sélectionné :', this.selectedFile.name);
       }
     }
 
@@ -39,7 +38,6 @@ export class AdminBeersComponent implements OnInit {
       this.beersService.getBeers().subscribe(
         (beers: Beer[]) => {
           this.allBeers = beers;
-          console.log(this.allBeers);
           
         },
         error => {
@@ -60,16 +58,13 @@ onFileDrop(files: NgxFileDropEntry[]): void {
       fileEntry.file((file: File) => {
         // Vérifiez si le fichier est une image
         if (this.isFileImage(file)) {
-          console.log('Fichier sélectionné :', file.name);
           const filePath = 'images/' + file.name;
           const fileRef = this.storage.ref(filePath);
           const task = this.storage.upload(filePath, file);
           task.snapshotChanges().subscribe({
             next: snapshot => {
-              console.log('Téléchargement réussi !');
               // Obtenez l'URL de téléchargement après le succès du téléchargement
               fileRef.getDownloadURL().subscribe(url => {
-                console.log('URL de téléchargement:', url);
                 // Mettez à jour l'avatar avec l'URL téléchargée
                 this.imageUrl = url;
                 this.addBeer();
@@ -85,7 +80,6 @@ onFileDrop(files: NgxFileDropEntry[]): void {
           // Mettez à jour l'URL de l'image
           
         } else {
-          console.log('Fichier sélectionné n\'est pas une image.');
           // Gérez le cas où un fichier non-image est sélectionné (facultatif)
         }
       });
@@ -111,11 +105,9 @@ onFileDrop(files: NgxFileDropEntry[]): void {
     this.allBeers.push(newBeer);
 
     // Gérez la suite du traitement ici, par exemple, afficher un message de succès
-    console.log('Bière ajoutée avec succès !');
 
   } else {
     // Gérez le cas où tous les champs ne sont pas renseignés
-    console.log('Veuillez remplir tous les champs.');
   }
 }*/
 
@@ -128,16 +120,13 @@ uploadBeer(): void {
     return;
   }
   if (!this.selectedFile) {
-    console.log('Veuillez sélectionner un fichier.');
     return;
   }
   // Vérifiez si le fichier est une image
   if (this.isFileImage(this.selectedFile)) {
-    console.log('Fichier sélectionné :', this.selectedFile.name);
     // Téléchargez l'image vers Firebase Storage
     this.uploadImage(this.selectedFile);
   } else {
-    console.log('Fichier sélectionné n\'est pas une image.');
     // Gérez le cas où un fichier non-image est sélectionné (facultatif)
   }
 }
@@ -149,7 +138,6 @@ confirmAndRemoveBeer(beerId: string): void {
 }
 removeBeer(beerId: string): void {
   this.beersService.removeBeer(beerId).then(() => {
-    console.log('Bière supprimée avec succès !');
     this.allBeers = this.allBeers.filter((beer: Beer) => beer.id !== beerId);
   }).catch(error => {
     console.error('Erreur lors de la suppression de la bière :', error);
@@ -166,10 +154,8 @@ uploadImage(file: File): void {
 
   task.snapshotChanges().subscribe({
     next: snapshot => {
-      console.log('Téléchargement réussi !');
       // Obtenez l'URL de téléchargement après le succès du téléchargement
       fileRef.getDownloadURL().subscribe(url => {
-        console.log('URL de téléchargement:', url);
         // Mettez à jour l'URL de l'image
         this.imageUrl = url;
         // Ajoutez la bière à la base de données après avoir téléchargé l'image
@@ -200,11 +186,9 @@ addBeer() {
     this.allBeers.push(newBeer);
 
     // Gérez la suite du traitement ici, par exemple, afficher un message de succès
-    console.log('Bière ajoutée avec succès !');
 
   } else {
     // Gérez le cas où tous les champs ne sont pas renseignés
-    console.log('Veuillez remplir tous les champs.');
   }
 }
 

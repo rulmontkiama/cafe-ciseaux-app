@@ -40,7 +40,6 @@ export class RendezVousService {
 }
 
   getAllRDV():Observable<any>{  
-    console.log('getAllRDV');
     
     let newItem: any;
     return this.db.collection<RendezVous>('rendez_vous', ref => ref
@@ -160,7 +159,6 @@ async searchRDV(term: string): Promise<RendezVous[]> {
   }*/
 
   getAllRDVLazy(lastVisibleDate: any, limit: number, orderDirection: 'asc' | 'desc'): Observable<any> {
-    console.log('rdv lazy');
     
     let newItem: any;
     let query = this.db.collection<RendezVous>('rendez_vous', ref => 
@@ -216,10 +214,6 @@ async getRDVForCurrentMonthOnce(year: number, month: number): Promise<RendezVous
   async getRDVForCurrentUserMonthOnce(userId: string, year: number, month: number): Promise<RendezVous[]> {
     const startOfMonth = new Date(year, month, 1);
     const endOfMonth = new Date(year, month + 1, 0,23, 59, 59);
-    console.log(userId);
-    console.log(userId);
-    console.log(startOfMonth);
-    console.log(endOfMonth);
     
     
     const q = this.db.collection<RendezVous>('rendez_vous', ref => ref
@@ -294,15 +288,11 @@ getRDVForCurrentUserMonth(userId: string, currentYear: any, currentMonth: any): 
     */ 
     try {
       // Récupération de l'user_id du RDV supprimé
-      console.log(rdv_id)
       const rdvDoc:any = await this.db.collection('rendez_vous').doc(rdv_id).get().toPromise();
       const rdvData = rdvDoc.data();
-      console.log(rdvData)
       const user_id = rdvData.user_id;
       const date = rdvData.date;
       const oldScissor = rdvData.scissor;
-      console.log(user_id)
-      console.log(oldScissor)
   
       // Suppression du rendez-vous
       await this.deleteRDV(rdv_id);
@@ -339,7 +329,6 @@ getRDVForCurrentUserMonth(userId: string, currentYear: any, currentMonth: any): 
   }
   async addRDV(rdvForm:any) { 
     const dateTimestamp = rdvForm.date;  
-    console.log(dateTimestamp);
       
     const firestore = this.firebaseService.getFirestoreInstance(); 
     if (!firestore) {

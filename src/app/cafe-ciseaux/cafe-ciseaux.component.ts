@@ -13,7 +13,6 @@ export class CafeCiseauxComponent implements OnInit {
   constructor(
   ){}
   ngOnInit(){
-    console.log('init 19 NOV');
     
   }
 }

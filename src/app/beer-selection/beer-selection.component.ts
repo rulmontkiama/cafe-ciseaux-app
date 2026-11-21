@@ -27,7 +27,6 @@ export class BeerSelectionComponent {
     this.beersService.getBeers().subscribe(
       (beers: Beer[]) => {
         this.allBeers = beers;
-        console.log(this.allBeers);
         
       },
       error => {

@@ -33,20 +33,6 @@ export class MessageService {
       map(messages => messages.length)
     );
   }
-  getUserMsg(userId:any):Observable<any>{  
-    let newItem: any;
-    return this.db.collection('messages', ref => ref
-    .orderBy('date','desc')).snapshotChanges()
-    .pipe(
-      map(messages => {
-        console.log(messages)
-        return messages.map(a => {               
-          const data =  a.payload.doc.data() as Message;      
-          return data;          
-        })
-      })
-    )
-  }
   getChatMsg(userDetails: any): Observable<Chat[]> {
     const userId = userDetails.uid;
   
@@ -103,8 +89,8 @@ export class MessageService {
               return Object.values(lastMessages).map((msgData: any) => {
                 const isMe = msgData.from_id === userId;
                 const otherUserId:any = isMe ? msgData.to_id : msgData.from_id;
-                const otherUser:any = users.find((user:any) => user[0].uid === otherUserId);
-                console.log(msgData.is_read)
+                const otherUser:any = users.find((user:any) => user && user[0] && user[0].uid === otherUserId);
+                if (!otherUser) { return null; }
                 return {
                   msg:msgData.msg,
                   date:msgData.date,
@@ -116,7 +102,7 @@ export class MessageService {
                   from_id:msgData.from_id,
                   hours:''
                 };
-              });
+              }).filter((chat: any) => chat !== null) as Chat[];
             })
           );
       })

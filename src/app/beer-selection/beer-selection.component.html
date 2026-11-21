@@ -15,7 +15,7 @@
             <span class="cut_angle">
                 <h2>{{ beer.nom | uppercase }}</h2>
             </span>
-            <img [src]="beer.imageUrl" [alt]="beer.title">
+            <img loading="lazy" decoding="async" [src]="beer.imageUrl" [alt]="beer.title">
             <p>{{ beer.description }}</p>    
         </li>
     </ul>

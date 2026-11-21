@@ -29,7 +29,6 @@ export class CustomvalidationService {
   }
 
   MatchPassword(password: string, confirmPassword: string) {
-    console.log('mzcg')
     return (formGroup: FormGroup) => {
       const passwordControl = formGroup.controls[password];
       const confirmPasswordControl = formGroup.controls[confirmPassword];
@@ -51,11 +50,9 @@ export class CustomvalidationService {
   }
 
   userNameValidator(userControl: AbstractControl) {
-    console.log('smack')
     return new Promise(resolve => {
       setTimeout(() => {
         if (this.validateUserName(userControl.value)) {
-          console.log('resolve')
           resolve({ userNameNotAvailable: true });
         } else {
           resolve(null);
@@ -65,7 +62,6 @@ export class CustomvalidationService {
   }
 
   validateUserName(userName: string) {
-    console.log(userName)
     const UserList = ['ankit', 'admin', 'user', 'superuser'];
     return (UserList.indexOf(userName) > -1);
   }

@@ -9,7 +9,6 @@ import { Component } from '@angular/core';
 })
 export class AdminParamsComponent {
   supprimerCompte(): void {
-    console.log('Fonction supprimerCompte() appelée.');
     // Ajoutez ici la logique de suppression du compte
     // Cette logique sera exécutée lorsque la fonction est appelée
   }

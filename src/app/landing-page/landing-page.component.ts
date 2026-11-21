@@ -18,19 +18,16 @@ export class LandingPageComponent implements OnInit {
   });
   }
   ngOnInit(): void {
-    console.log('storm')
   }
   onContinue() : void{
     this.router.navigateByUrl('cafeCiseaux');    
   }
   modifyHeader(location: { url: string; }) { // This method is called many times
-    console.log('goose')
     if (location.url === '/') {
         this.showHeader = false;
     } else {
         this.showHeader = true;
     }
-    console.log(this.showHeader)
 }
 
 }

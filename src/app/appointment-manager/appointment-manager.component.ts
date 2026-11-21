@@ -51,7 +51,6 @@ export class AppointmentManagerComponent {
     )
     .subscribe({
       next: (rendezVous:any) => {
-        console.log('Résultats de recherche :', rendezVous);
         if (rendezVous.length === 0) {
           this.rendezVous = []; // Assurer que la liste est réinitialisée si aucune donnée n'est trouvée
         } else {
@@ -65,7 +64,6 @@ export class AppointmentManagerComponent {
     event.stopPropagation();
 
     if (this.isDeleteDisabled) {
-      console.log("La suppression est temporairement désactivée. Veuillez réessayer dans quelques secondes.");
       return;
     }
   
@@ -113,7 +111,6 @@ export class AppointmentManagerComponent {
           // Ajouter les nouveaux rendez-vous à la liste existante
           this.rendezVous = [...this.rendezVous, ...uniqueRDVs];
   
-          console.log('📅 Liste des rendez-vous mise à jour:', this.rendezVous.length);
   
           // Stocker la référence du dernier rendez-vous pour la pagination
           this.lastVisibleRDV = result[result.length - 1];

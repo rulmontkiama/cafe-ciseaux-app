@@ -3,7 +3,6 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { map, Observable } from 'rxjs';
 import { Schedule } from '../models/schedule';
 import firebase from 'firebase/compat/app';
-import { log } from 'console';
 @Injectable({
   providedIn: 'root'
 })
@@ -38,9 +37,6 @@ export class ScheduleService {
       .get()
       .toPromise()
       .then((querySnapshot:any) => {
-        console.log(day);
-        console.log(key);
-        console.log(value);
         
         
         
@@ -52,7 +48,6 @@ export class ScheduleService {
         });
       })
       .catch((error) => {
-        console.log("Error getting documents: ", error);
       });
   }
   updateSchedule(jour: string, key: string, valeur: string) {
@@ -63,15 +58,11 @@ export class ScheduleService {
         querySnapshot.forEach((doc:any) => {
           const data = doc.data();
           const id = doc.id;
-          console.log(id)
-          console.log(key)         
           data[jour][0][key] = valeur;
-          console.log( data[jour])
           this.db.collection('horaires').doc(id).update({ [jour]: data[jour] });
         });
       })
       .catch((error) => {
-        console.log("Error getting documents: ", error);
       });
   }
 

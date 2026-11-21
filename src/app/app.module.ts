@@ -14,10 +14,8 @@ import { NavigationComponent } from './navigation/navigation.component';
 import { AuthModule } from './auth/auth/auth.module';
 import { ProfileComponent } from './main/profile/profile.component';
 import { ResetPasswordComponent } from './auth/components/reset-password/reset-password.component';
-import { AdminComponent } from './admin/admin.component';
 import { FileUploadComponent } from './file-upload/file-upload.component';
 import { FormsModule} from '@angular/forms';
-import { ClickDirectiveDirective } from './directive/click-directive.directive';
 import {ToastrModule} from 'ngx-toastr';
 import { AlertComponent } from './alert/alert.component';
 //rendez-vous service
@@ -35,17 +33,11 @@ import { ScheduleComponent } from './schedule/schedule.component';
 import { PolicyComponent } from './policy/policy.component';
 import { FooterComponent } from './footer/footer.component';
 import { BarComponent } from './bar/bar.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
-import { AdminRendezVousComponent } from './admin-rendez-vous/admin-rendez-vous.component';
-import { AdminScheduleComponent } from './admin-schedule/admin-schedule.component';
-import { AppointmentManagerComponent } from './appointment-manager/appointment-manager.component';
-import { AdminMessageComponent } from './admin-message/admin-message.component';
-import { AdminBeersComponent } from './admin-beers/admin-beers.component';
 import { UserMessageComponent } from './user-message/user-message.component';
 import { BeerSelectionComponent } from './beer-selection/beer-selection.component';
 import { LoginDemoComponent } from './auth/components/login-demo/login-demo.component';
 import { NgxFileDropModule } from 'ngx-file-drop';
-import { CalendarViewComponent } from './calendar-view/calendar-view.component';
+import { SharedModule } from './shared/shared.module';
 
 
 @NgModule({
@@ -56,25 +48,23 @@ import { CalendarViewComponent } from './calendar-view/calendar-view.component';
     HeaderComponent,
     NavigationComponent,
     ProfileComponent,
-    AdminComponent,
+    
     FileUploadComponent,
-    ClickDirectiveDirective,
     AlertComponent,
     VerifyEmailComponent,
     ScheduleComponent,
     PolicyComponent,
     FooterComponent,
     BarComponent,
-    DashboardComponent,
-    AdminRendezVousComponent,
-    AdminScheduleComponent,
-    AppointmentManagerComponent,
-    AdminMessageComponent,
-    AdminBeersComponent,  
+    
+    
+    
+    
+    
     UserMessageComponent,
     BeerSelectionComponent,
     LoginDemoComponent,
-    CalendarViewComponent
+    
   
   ],
   imports: [
@@ -91,7 +81,8 @@ import { CalendarViewComponent } from './calendar-view/calendar-view.component';
     AngularFireAuthModule,
     AngularFirestoreModule,
     AngularFireStorageModule,
-    NgxFileDropModule
+    NgxFileDropModule,
+    SharedModule
   ],
   providers: [
     AngularFirestore,

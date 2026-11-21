@@ -18,7 +18,6 @@ export class ScheduleComponent {
   async ngOnInit() {  
     await this.scheduleService.getSchedule().subscribe(schedule => {
      this.scheduleArray = schedule[0];
-     console.log(this.scheduleArray)
      this.days = Object.entries(this.scheduleArray)
   .sort((a, b) => this.weekdays.indexOf(a[0]) - this.weekdays.indexOf(b[0]));
 

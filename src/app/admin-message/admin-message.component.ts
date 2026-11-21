@@ -34,7 +34,6 @@ export class AdminMessageComponent {
       this.searchResults = this.msgService.getChatMsg(this.userDetails).pipe(
         map(chats => chats.filter(chat => chat.nom.toLowerCase()))
       );
-      console.log(this.searchResults)
     }    
     async onSearchUsers($event: any) {
       const searchValue = $event.target?.value || '';
@@ -70,7 +69,6 @@ export class AdminMessageComponent {
         .subscribe(
           conversation => {
             this.conversation = conversation;
-            console.log(this.conversation);
             // Faire des actions avec les données récupérées
           },
           error => {

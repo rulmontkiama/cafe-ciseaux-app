@@ -36,7 +36,6 @@ export class NavigationComponent implements OnInit {
   constructor(private cafeCiseauxService: cafeCiseauxService){}
   ngOnInit(): void {
     this.contactDetails = this.cafeCiseauxService.getContactDetails();
-    console.log(this.contactDetails)
   }
   toggle() {
     this.collapsed = !this.collapsed;
@@ -44,11 +43,9 @@ export class NavigationComponent implements OnInit {
   }
   expand() {
     this.collapsed = false;
-    console.log(this.collapsed)
   }
   collapse() {
     this.collapsed = true;
-    console.log(this.collapsed)
 
   }
  

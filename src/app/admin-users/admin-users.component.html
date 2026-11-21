@@ -9,7 +9,7 @@
 <ul class="adminList">
   <li *ngFor="let user of users" class="user-card">
     <div class="avatar">
-      <img [src]="user.avatar" alt="User Avatar" class="avatar-image" />
+      <img loading="lazy" decoding="async" [src]="user.avatar" alt="User Avatar" class="avatar-image" />
     </div>
     <div class="user-info">
       <h2>{{ user.nom | uppercase }} {{ user.prenom | uppercase }}</h2>

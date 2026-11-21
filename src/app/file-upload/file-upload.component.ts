@@ -44,7 +44,6 @@ export class FileUploadComponent{
         fileEntry.file((file: File) => {
           // Vérifiez si le fichier est une image
           if (this.isFileImage(file)) {
-            console.log('Fichier sélectionné :', file);
 
             // Téléchargez le fichier vers Firebase Storage
             // Chaque utilisateur écrit uniquement dans son propre dossier (voir storage.rules)
@@ -55,10 +54,8 @@ export class FileUploadComponent{
             // Gérez le succès ou l'erreur du téléchargement
             task.snapshotChanges().subscribe({
               next: snapshot => {
-                console.log('Téléchargement réussi !');
                 // Obtenez l'URL de téléchargement après le succès du téléchargement
                 fileRef.getDownloadURL().subscribe(url => {
-                  console.log('URL de téléchargement:', url);
                   // Mettez à jour l'avatar avec l'URL téléchargée
                   this.updateAvatar(url);
                 });
@@ -69,7 +66,6 @@ export class FileUploadComponent{
               }
             });
           } else {
-            console.log('Fichier sélectionné n\'est pas une image.');
             // Gérez le cas où un fichier non-image est sélectionné (facultatif)
           }
         });
@@ -77,7 +73,6 @@ export class FileUploadComponent{
     }
   }
   isFileImage(file: File): boolean {
-    console.log(file.type);
     
     return file.type.startsWith('image/');
   }

@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { AngularFirestore, QueryDocumentSnapshot } from '@angular/fire/compat/firestore';
 import { Users, UsersWithRdvCount,UsersWithRdvSnap }  from '../models/users';
 import {   first,  firstValueFrom,  map, Observable, of,} from 'rxjs';
-import { log } from 'console';
 @Injectable({
   providedIn: 'root'
 })
@@ -113,7 +112,6 @@ export class UsersService {
     .pipe(
       map(RendezVous => {
         return RendezVous.map(a => {
-          console.log(a);
           const data = a.payload.doc.data() as Users;
           return data;
         });

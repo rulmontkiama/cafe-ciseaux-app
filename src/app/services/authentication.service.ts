@@ -5,24 +5,16 @@ import { Router } from '@angular/router';
 import { Users } from '../models/users';
 import { UsersService } from './users.service';
 import { AdminService } from './admin.service';
-import { Buffer } from 'buffer';
 import { environment } from 'src/environments/environment';
-const crypto = require('crypto-browserify');
-import * as jwt from 'jsonwebtoken';
 import { Capacitor } from '@capacitor/core';
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/compat/firestore';
 import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { Observable, firstValueFrom } from 'rxjs';
 import firebase from 'firebase/compat/app';
-import { log } from 'console';
 @Injectable({
   providedIn: 'root',
 })
 export class AuthenticationService {
-  getUserId() {
-    throw new Error('Method not implemented.');
-  }
-  private getRandomValue: (arr: any) => Buffer = require('crypto').randomBytes;
   //currentUser$ = authState(this.auth);
   userData: any
   existingAdminIds: any[] = [];
@@ -67,12 +59,9 @@ export class AuthenticationService {
           // Supprimer le compte
           await this.db.collection('users').doc(uid).delete();
           await user.delete();
-          console.log('Compte utilisateur supprimé avec succès.');
-          console.log(uid)
           
          
         } else {
-          console.log('Suppression du compte annulée.');
         }
       } catch (error) {
         console.error('Une erreur s\'est produite lors de la suppression du compte :', error);
@@ -104,8 +93,7 @@ export class AuthenticationService {
       const profile = profiles && profiles[0];
       if (!profile) return false;
       this.setAdminIds(admins);
-      const token = jwt.sign({ uid: profile.uid, email: profile.email }, this.generateSecretKey());
-      this.setDataInLocalStorage('token', token);
+      this.setDataInLocalStorage('token', this.generateSessionMarker());
       this.setDataInLocalStorage('userInfos', JSON.stringify(profile));
       return true;
     } catch (error) {
@@ -138,15 +126,11 @@ export class AuthenticationService {
   }
 
    // Send email verfificaiton when new user sign up
-  private generateSecretKey(): string {
-    const length = 32;
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let key = '';
-    for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * charset.length);
-      key += charset.charAt(randomIndex);
-    }
-    return key;
+  /** Marqueur de session local (32 caractères aléatoires). Ce n'est pas un secret : la vraie session est celle de Firebase. */
+  private generateSessionMarker(): string {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
   }
   SendVerificationMail() {
     return this.afAuth.currentUser
@@ -252,8 +236,6 @@ export class AuthenticationService {
   sign up with username/password and sign in with social auth  
   provider in Firestore database using AngularFirestore + AngularFirestoreDocument service */
   SetUserData(user: any) {
-    console.log(user)
-    console.log(user.email)
     
     const userRef: AngularFirestoreDocument<any> = this.db.doc(
       `users/${user.uid}`
@@ -337,7 +319,6 @@ export class AuthenticationService {
   }
   getId() {
     let data = JSON.parse(localStorage.getItem('userInfos')|| '{}');
-    console.log(data.uid);
     
     return data.uid
 }

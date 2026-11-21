@@ -77,14 +77,12 @@ async loadAppointments() {
     const currentRoute = this.route.snapshot.url.join('/');
     let appointmentsData: any[] | null = null; // Nous allons stocker directement les données
     const userId: any = this.authService.getId();
-    console.log(this.currentYear);
     
     try {
         if (currentRoute.includes('admin')) {
             // Appel à la version ponctuelle du service
             appointmentsData = await this.rendez_vous.getRDVForCurrentMonthOnce(this.currentYear, this.currentMonth);
         } else {
-          console.log(this.currentMonth);
             // Appel à la version ponctuelle du service
             appointmentsData = await this.rendez_vous.getRDVForCurrentUserMonthOnce(userId, this.currentYear, this.currentMonth);
         }
@@ -193,7 +191,6 @@ removeRDV(event:Event){
   event.stopPropagation();
 
   if (this.isDeleteDisabled) {
-    console.log("La suppression est temporairement désactivée. Veuillez réessayer dans quelques secondes.");
     return;
   }
 

@@ -44,7 +44,6 @@ export class UserMessageComponent {
       this._toast.showWarning('MESSAGERIE', 'aucun destinataire disponible pour le moment');
       return;
     }
-    console.log(this.userDetails)
     this.adminUser =  await this.userService.getSender(adminId);
     if(Array.isArray(this.adminUser)){
       this.adminUser = this.adminUser[0];
@@ -53,7 +52,6 @@ export class UserMessageComponent {
     (await this.msgService.getConversation(adminId, this.userDetails))
     .pipe(
       map(conversation => {
-        console.log(this.adminUser)
         // Modifier la date pour chaque message de la conversation
         conversation.forEach(message => {
           const formattedDate = this.dateService.formatDate(message.date.seconds * 1000);
@@ -66,7 +64,6 @@ export class UserMessageComponent {
     .subscribe(
       conversation => {
         this.conversation = conversation;
-        console.log(this.conversation);
         // Faire des actions avec les données récupérées
       },
       error => {

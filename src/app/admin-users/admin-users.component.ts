@@ -26,10 +26,8 @@ export class AdminUsersComponent implements OnInit {
         debounceTime(400), // Débounce de 400 ms
         distinctUntilChanged(), // Ne pas traiter les mêmes recherches successives
         switchMap((searchTerm: string) => {
-          console.log(searchTerm);
           
           if (!searchTerm || searchTerm.trim() === '') {
-            console.log('posey');
             this.users = []
             this.lastVisibleUser= null;
             // Si la recherche est vide, appeler la méthode loadUsers pour recharger les utilisateurs
@@ -42,7 +40,6 @@ export class AdminUsersComponent implements OnInit {
       )
       .subscribe({
         next: (users:any) => {
-          console.log('Résultats de recherche :', users);
           if (users.length === 0) {
             this.users = []; // Assurer que la liste est réinitialisée si aucune donnée n'est trouvée
           } else {
