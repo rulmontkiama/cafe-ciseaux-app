@@ -6,9 +6,6 @@ workflows:
     integrations:
       app_store_connect: codemagic
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: be.cafeciseaux.app
       vars:
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
@@ -30,8 +27,13 @@ workflows:
         script: |
           BUILD_NUM="${PROJECT_BUILD_NUMBER:-1}"
           sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = ${BUILD_NUM};/g" ios/App/App.xcodeproj/project.pbxproj
-      - name: Appliquer les profils de signature Apple
+      - name: Créer/récupérer le certificat et profil App Store Apple
         script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
           xcode-project use-profiles --project ios/App/App.xcodeproj
       - name: Archiver et exporter l'IPA signé
         script: |
