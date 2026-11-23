@@ -29,29 +29,60 @@ workflows:
           sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = ${BUILD_NUM};/g" ios/App/App.xcodeproj/project.pbxproj
       - name: Créer/récupérer le certificat et profil App Store Apple
         script: |
+          set -e
+          python3 - <<'EOF'
+          import base64, os, re, sys, textwrap
+          raw = os.environ.get("APP_STORE_CONNECT_PRIVATE_KEY", "").replace("\\n", "\n").replace("\r", "").strip()
+          if not raw:
+              sys.exit("Erreur : APP_STORE_CONNECT_PRIVATE_KEY est vide.")
+          if "BEGIN PRIVATE KEY" not in raw:
+              try:
+                  decoded = base64.b64decode(raw).decode("utf-8", errors="ignore")
+                  if "BEGIN PRIVATE KEY" in decoded:
+                      raw = decoded
+              except Exception:
+                  pass
+          body = re.sub(r"-----BEGIN [^-]+-----|-----END [^-]+-----|\s+", "", raw)
+          try:
+              der = base64.b64decode(body, validate=True)
+          except Exception:
+              sys.exit("Erreur : APP_STORE_CONNECT_PRIVATE_KEY ne contient pas le texte du fichier .p8 (ouvrez le .p8 dans Bloc-notes et collez tout son contenu).")
+          if len(der) < 60:
+              sys.exit("Erreur : la clé .p8 semble incomplète (trop courte).")
+          pem = "-----BEGIN PRIVATE KEY-----\n" + "\n".join(textwrap.wrap(body, 64)) + "\n-----END PRIVATE KEY-----\n"
+          with open("/tmp/asc_key.p8", "w") as f:
+              f.write(pem)
+          print("Clé privée .p8 normalisée avec succès.")
+          EOF
           keychain initialize
           ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/cert_key -q -N ""
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key=@file:/tmp/asc_key.p8 \
             --certificate-key=@file:/tmp/cert_key
           keychain add-certificates
           xcode-project use-profiles --project ios/App/App.xcodeproj
       - name: Archiver et exporter l'IPA signé
         script: |
+          set -e
           xcode-project build-ipa \
             --workspace "$CM_BUILD_DIR/$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME"
+      - name: Envoyer l'IPA sur App Store Connect / TestFlight
+        script: |
+          set -e
+          IPA_FILE=$(find build/ios/ipa -name "*.ipa" | head -n 1)
+          app-store-connect publish \
+            --path "$IPA_FILE" \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key=@file:/tmp/asc_key.p8
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
-    publishing:
-      app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        submit_to_testflight: true
-        submit_to_app_store: false
 
   android-play-store:
     name: Café Ciseaux — Android Play Store
