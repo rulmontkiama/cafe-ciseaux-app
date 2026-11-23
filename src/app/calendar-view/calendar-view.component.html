@@ -1,84 +1,89 @@
-<!-- calendar-view.component.html -->
 <div class="calendar">
-    <div *ngIf="isCalendarVisible"  class="calendarContainer">
-        <div class="calendar-header">
-            <div class="montCount">
-                  <p class="countUnit">{{monthCount}}</p>
-            </div>
-            <div class="calendarCommand">
-              <button (click)="previousMonth()">&lt;</button>
-              <h2>{{ monthNames[currentMonth] }} {{ currentYear }}</h2>
-              <button (click)="nextMonth()">&gt;</button>
-            </div>
-          </div>
-          <div class="calendar-grid">
-            <div *ngFor="let day of daysInMonth" class="calendar-day" [ngClass]="{'hasRdv': day.rdvCount > 0}" (click)="selectDay(day)">
-              <div class="day-name">
-                  <p>{{ day.dayName }}</p>
-              </div>
-              <div class="day-number">
-                  <p>{{ day.date }}</p>
-              </div>
-              
-              <div class="appointments-count" [ngClass]="{'hasRdv': day.rdvCount > 0}">
-                <p *ngIf="day.rdvCount > 0">{{ day.rdvCount }} RDV</p>
-                <p *ngIf="day.rdvCount <= 0">No RDV</p>
-              </div>
-            </div>
-          </div>
+  <div *ngIf="isCalendarVisible" class="calendarContainer">
+    <div class="calendar-header">
+      <div class="calendarCommand">
+        <button type="button" (click)="previousMonth()" aria-label="Mois précédent">‹</button>
+        <div class="month-title-block">
+          <h2>{{ monthNames[currentMonth] | uppercase }} {{ currentYear }}</h2>
+          <span class="month-meta">{{ monthCount }} rendez-vous ce mois</span>
+        </div>
+        <button type="button" (click)="nextMonth()" aria-label="Mois suivant">›</button>
+      </div>
+
+      <div class="calendar-toolbar">
+        <button type="button" class="tool-pill" (click)="goToToday()">Aujourd'hui</button>
+        <button type="button" class="tool-pill" [class.is-active]="onlyWithRdv" (click)="onlyWithRdv = !onlyWithRdv">
+          {{ onlyWithRdv ? 'Jours avec RDV uniquement' : 'Afficher tous les jours' }}
+        </button>
+      </div>
     </div>
 
+    <p *ngIf="isLoading" class="calendar-state">Chargement de l'agenda…</p>
+    <p *ngIf="!isLoading && visibleDays.length === 0" class="calendar-state">
+      Aucun rendez-vous sur ce mois.
+    </p>
 
-     <!-- Section conditionnelle pour afficher les rendez-vous -->
-  <div *ngIf="!isCalendarVisible" class="appointments-list">
+    <div *ngIf="!isLoading && visibleDays.length > 0" class="calendar-grid">
+      <button
+        type="button"
+        *ngFor="let day of visibleDays"
+        class="calendar-day"
+        [class.hasRdv]="day.rdvCount > 0"
+        [class.is-today]="day.isToday"
+        (click)="selectDay(day)">
+        <span class="day-name">{{ day.dayName }}</span>
+        <span class="day-number">{{ day.date }}</span>
+        <span class="appointments-count" [class.has-count]="day.rdvCount > 0">
+          {{ day.rdvCount > 0 ? (day.rdvCount + ' RDV') : '—' }}
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Détail des rendez-vous d'une journée -->
+  <div *ngIf="!isCalendarVisible && selectedDay" class="appointments-list">
     <div class="appointments-list-header">
-        <h3>Rendez-vous pour le {{ selectedDay.date }} {{ monthNames[currentMonth] }} {{ currentYear }}</h3>
-        <span class="close-appointments" (click)="showCalendar()">
-            <p>X</p>
-        </span>
+      <button type="button" class="back-cal-btn" (click)="showCalendar()">← Agenda</button>
+      <h3>{{ selectedDay.date }} {{ monthNames[currentMonth] }} {{ currentYear }}</h3>
+      <span class="day-total">{{ selectedDay.rdvCount }} RDV</span>
     </div>
-    <ul *ngFor="let rdv of selectedDay.rendezVous" class="RDV_list"  [attr.id]="'rdv-' + rdv.id">
-     <li class="rdvUnit" id="{{rdv.passed}}" [ngClass]="{'has-passed': rdv.passed}">
-      <img *ngIf="rdv.passed" src="assets/BLOCKED.svg" class="passedImg">           
-      <div *ngIf="!rdv.passed" class="RDV_delete">
-        <span id="{{rdv.id}}">
-            <img data-id="{{rdv.id}}" (click)="removeRDV($event)" src="assets/DELETE.svg">   
-        </span>
-      </div>
-      <div class="RDV_avatar">
-        <img loading="lazy" decoding="async" src="{{rdv.avatar}}" class="profile_user_pictures" alt="profile_user_pictures">
-      </div>
-      <div class="rdv_infos_container">
-        <div>                    
-          <div class="RDV_names cut_angle">
-            <h2>{{rdv.nom | uppercase}}</h2><h2>{{rdv.prenom | uppercase}}</h2>
-          </div> 
-          <div>
-            <div class="RDV_left_list">
-              <div class="scissor_block">
-                <img src="assets/SCISSOR.svg">
-                <h1>{{rdv.scissor}}</h1>
-              </div>
-              <div>
-                <p>{{rdv.type | uppercase}}</p>
-              </div>
-            </div>
-          </div>
+
+    <p *ngIf="selectedDay.rendezVous.length === 0" class="calendar-state">
+      Aucun rendez-vous prévu ce jour-là.
+    </p>
+
+    <ul *ngIf="selectedDay.rendezVous.length > 0" class="RDV_list">
+      <li
+        *ngFor="let rdv of selectedDay.rendezVous"
+        class="rdvUnit"
+        [attr.id]="'rdv-' + rdv.id"
+        [class.has-passed]="rdv.passed">
+        <div class="rdv-time-col">
+          <span class="rdv-hour">{{ rdv.hours }}</span>
         </div>
-      </div>           
-      <div class="RDV_right_cont">
-        <div class="RDV_right_list cut_angle">
-          <div>
-            <p>{{rdv.date}}</p>
-            </div>
-            <div class="RDV_hours">
-                <p>{{rdv.hours}}</p>
-            </div>
+
+        <div class="RDV_avatar">
+          <img loading="lazy" decoding="async" [src]="rdv.avatar || 'assets/AVATAR.svg'" alt="Avatar client">
         </div>
-      </div>     
-    </li>                       
+
+        <div class="rdv_infos_container">
+          <strong class="rdv-client-name">{{ rdv.prenom | uppercase }} {{ rdv.nom | uppercase }}</strong>
+          <span class="rdv-type">{{ rdv.type | uppercase }}</span>
+          <a *ngIf="rdv.phone" class="rdv-phone" [href]="'tel:' + rdv.phone">📞 {{ rdv.phone }}</a>
+        </div>
+
+        <div class="rdv-actions-col">
+          <span *ngIf="rdv.passed" class="status-passed">Passé</span>
+          <button
+            *ngIf="!rdv.passed"
+            type="button"
+            class="delete-rdv-btn"
+            [disabled]="isDeleteDisabled"
+            (click)="removeRDV($event, rdv.id)">
+            Supprimer
+          </button>
+        </div>
+      </li>
     </ul>
   </div>
-  </div>
-  
-
+</div>

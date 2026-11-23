@@ -31,8 +31,8 @@ export class FileUploadComponent{
     private _toast:AlertService,
     ) { }
   ngOnInit() {
-    this.uid = this.authService.getUserInfos().uid
-    this.avatar = of(this.authService.getUserInfos().avatar)
+    this.uid = this.authService.getUserInfos()?.uid
+    this.avatar = of(this.authService.getUserInfos()?.avatar)
   }
   onClose() {
     this.close.emit();
@@ -53,16 +53,20 @@ export class FileUploadComponent{
 
             // Gérez le succès ou l'erreur du téléchargement
             task.snapshotChanges().subscribe({
-              next: snapshot => {
-                // Obtenez l'URL de téléchargement après le succès du téléchargement
-                fileRef.getDownloadURL().subscribe(url => {
-                  // Mettez à jour l'avatar avec l'URL téléchargée
-                  this.updateAvatar(url);
+              complete: () => {
+                fileRef.getDownloadURL().subscribe({
+                  next: (url) => {
+                    this.updateAvatar(url);
+                  },
+                  error: (err) => {
+                    console.error('Impossible de récupérer l’URL de l’avatar :', err);
+                    this._toast.showError('ERREUR', "Impossible de récupérer l'image téléchargée");
+                  }
                 });
               },
-              error: error => {
+              error: (error) => {
                 console.error('Erreur lors du téléchargement du fichier :', error);
-                // Gérez l'erreur ici (par exemple, affichez un message d'erreur à l'utilisateur)
+                this._toast.showError('ERREUR', "Échec de l'envoi de l'image");
               }
             });
           } else {
@@ -88,6 +92,12 @@ export class FileUploadComponent{
             doc.ref.update({ avatar: url });
           });
         });
+        // Synchronise le cache local
+        const infos = this.authService.getUserInfos();
+        if (infos) {
+          infos.avatar = url;
+          this.authService.setDataInLocalStorage('userInfos', JSON.stringify(infos));
+        }
         // Afficher un message de succès
         this._toast.showSucces('Avatar mis à jour', 'Votre image de profil a été modifiée avec succès');
       })

@@ -1,116 +1,207 @@
 <div class="RDV_container">
-    <form  class="RDV_form" [formGroup]="rdvForm"  (ngSubmit) = "onSubmit()">
-    <span  class="cut_angle rdv_title">
-        <h2>RENDEZ VOUS</h2>       
-    </span>
-    <h2 class="titleTime">ANNÉE: </h2>
-    <div class="calendar_year">
-        <span (click)="decrementYear()"  class="yearSwitch yearSwitchLeft">
-            <p><</p>
-        </span>
-        <h2>{{year}}</h2>
-        <span  (click)="incrementYear()" class="yearSwitch yearSwitchRight">
-            <p>></p>
-        </span>
+  <form class="RDV_form" [formGroup]="rdvForm" (ngSubmit)="onSubmit()">
+    <div class="rdv-header">
+      <span class="cut_angle rdv_title">
+        <h2>RENDEZ-VOUS.</h2>
+      </span>
+      <p class="rdv-subtitle">Choisissez votre prestation, votre jour et votre créneau.</p>
     </div>
-    <h2 class="titleTime">MOIS: </h2>
-    <input class = 'form-control hidden_input'  type="number" name = "month" [(ngModel)]="monthNum" formControlName="month"  >
-    <div class="calendar_month" [ngClass]="{'collapsed': collapsed}" (click)="collapsed = !collapsed">
-        <p>{{monthName | uppercase}}</p>
-    </div>
-    <div class="month_selector" [@collapse]="collapsed">
-        <ul>
-            <li #parentMonth (click)="setCurrentMonthEvent($event);collapsed = !collapsed"  [class.newstyle]="monthName.toUpperCase() === mn.toUpperCase() && monthStatus != false" id="{{mn | uppercase}}" class="month_block" *ngFor="let mn of monthNames" >
-            <p  (click)="parentMonth.click();$event.stopPropagation();" id="{{mn | uppercase}}">{{mn | uppercase}}</p> 
-            </li> 
-        </ul> 
-    </div>
-<div class="calendar_days">
-    <h2 class="titleTime">JOUR : </h2>
-    
-    <span class="form_error">
-        <span *ngIf="submitted && f['day'].errors?.['required']">
-            <p>Veuillez choisir un jour valide</p>
-        </span>             
-    </span>         
 
-    <input class='form-control hidden_input' type="text" name="day" [(ngModel)]="currentDay" formControlName="day">
-    
-    <div class="days_scroll" 
-         #daysScroll
-         (touchstart)="handleTouchStart($event, 'days')" 
-         (touchmove)="handleTouchMove($event, 'days')">
-         
-        <ul class="days_list" *ngFor="let n of monthDaysArray; let i = index;">
-            <li>
-                <span #parentDay 
-                      [class.select_day]="currentDay === (i+1) && dayStatus != false" 
-                      id="{{i+1}}" 
-                      (click)="setCurrentDay($event, i)" 
-                      class="day_block" 
-                      *ngIf="closedDaysArray[i] != false && passedDaysArray[i] != true">
-                      
-                    <p (click)="parentDay.click();$event.stopPropagation()">
-                        {{monthDaysArray[i]}}
-                    </p> 
-                    <p (click)="parentDay.click();$event.stopPropagation()">
-                        {{ this.monthDaysName[i] | uppercase }}
-                    </p> 
-                </span>             
-            </li>
-        </ul>        
-    </div>
-</div>
-    <span class="form_error">
-        <span *ngIf="submitted && f['hours'].errors?.['required']">
-        <p >
-            Veuillez choisir une heure valide
-        </p>  
-        </span>             
-    </span> 
-    <h2 class="titleTime">HEURE : </h2>
-    <div class="select_hours">
-        <input class="form-control hidden_input" 
-            type="number" 
-            name="hours" 
-            formControlName="hours" 
-            [(ngModel)]="currentHours">
+    <!-- ÉTAPE 01 : PRESTATION -->
+    <section class="rdv-step">
+      <div class="step-label">
+        <span class="step-num">01</span>
+        <h2>PRESTATION</h2>
+      </div>
 
-        <div class="hours_scroll" 
-            #hoursScroll
-            (touchstart)="handleTouchStart($event, 'hours')" 
-            (touchmove)="handleTouchMove($event, 'hours')">
-            
-            <ul *ngIf="dayStatus" class="hour_list">          
-                <li *ngFor="let n of scheduleArray; let i = index;">
-                    <span #parentHours 
-                        class="hour_block" 
-                        (click)="toggleHour(i);" 
-                        [class.unavailable_hour]="availableArray[i] == true" 
-                        [class.select_hour]="currentHours == scheduleArray[i] && hourStatus != false">
-                        
-                        <p (click)="parentHours.click();$event.stopPropagation()">
-                            {{scheduleArray[i]}}
-                        </p> 
-                    </span>         
-                </li>    
-            </ul>       
+      <span class="form_error">
+        <span *ngIf="submitted && f['type'].errors?.['required']">
+          <p>Veuillez choisir votre prestation</p>
+        </span>
+      </span>
+
+      <div class="prestations-grid">
+        <button
+          *ngFor="let t of types"
+          type="button"
+          class="prestation-card"
+          [class.is-selected]="rdvForm.get('type')?.value === t.name.toLowerCase()"
+          (click)="selectType(t)">
+          <div class="prestation-main">
+            <span class="prestation-name">{{ t.name }}</span>
+            <span class="prestation-meta">
+              <span *ngIf="t.durationMin">~{{ t.durationMin }} min</span>
+              <span *ngIf="t.durationMin && t.price"> · </span>
+              <strong *ngIf="t.price">{{ t.price }}</strong>
+            </span>
+          </div>
+          <span class="prestation-check" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <div class="duration-note" role="note">
+        <div class="note-head">
+          <span class="note-icon" aria-hidden="true">⏱</span>
+          <span class="note-title">À SAVOIR · DURÉE INDICATIVE</span>
         </div>
-    </div>
-    <span class="form_error">
-    <span *ngIf="submitted && f['type'].errors?.['required']">
-        <p >
-            Veuillez choisir votre type de coupe
-        </p>  
-        </span>  
+        <p>
+          Les créneaux sont estimés à <strong>20 min</strong>, mais le temps réel peut varier selon de nombreux facteurs (type de cheveux, travail demandé, rythme du salon). Merci d'avance pour votre compréhension !
+        </p>
+      </div>
+    </section>
+
+    <!-- ÉTAPE 02 : DATE -->
+    <section class="rdv-step">
+      <div class="step-label">
+        <span class="step-num">02</span>
+        <h2>DATE</h2>
+      </div>
+
+      <div class="period-bar">
+        <button
+          type="button"
+          class="nav-month-btn"
+          [disabled]="!canGoPrevMonth"
+          (click)="previousMonth()"
+          aria-label="Mois précédent">
+          ‹
+        </button>
+
+        <button
+          type="button"
+          class="calendar_month"
+          [class.is-open]="!collapsed"
+          (click)="collapsed = !collapsed"
+          title="Choisir un mois">
+          <span>{{ monthName | uppercase }} {{ year }}</span>
+          <span class="chevron" aria-hidden="true">{{ collapsed ? '▾' : '▴' }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="nav-month-btn"
+          (click)="nextMonth()"
+          aria-label="Mois suivant">
+          ›
+        </button>
+      </div>
+
+      <div class="month_selector" [@collapse]="collapsed">
+        <ul>
+          <li *ngFor="let mn of monthNames; let idx = index">
+            <button
+              type="button"
+              class="month_block"
+              [class.newstyle]="idx === monthNum"
+              [disabled]="isMonthInPast(idx)"
+              (click)="selectMonth(idx)">
+              {{ mn | uppercase }}
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <span class="form_error">
+        <span *ngIf="submitted && f['day'].errors?.['required']">
+          <p>Veuillez choisir un jour disponible</p>
         </span>
-    <div class="cut_type">
-        
-        <select  class="cut_select bttn_cyber" name="type" (change)="changeType($event)">
-            <option class="typeOption">-- TYPE DE COUPE --</option>
-            <option class="typeOption" *ngFor="let type of types" [ngValue]="type.name">{{type.name}}</option>
-        </select>
-    </div>
-    <button class= 'btn btn-outline-info connect bttn_cyber' type = "submit" value = "rdv">VALIDER</button>
-</form>
+      </span>
+
+      <p *ngIf="loadingSchedule" class="hours-placeholder">Chargement des disponibilités…</p>
+
+      <div *ngIf="!loadingSchedule && openDays.length === 0" class="no-days-box">
+        <p>Aucun jour disponible sur {{ monthName | lowercase }} {{ year }}.</p>
+        <button type="button" class="next-month-cta" (click)="nextMonth()">
+          Voir {{ monthNames[(monthNum + 1) % 12] | lowercase }} →
+        </button>
+      </div>
+
+      <div *ngIf="!loadingSchedule && openDays.length > 0" class="days-strip-wrap">
+        <button type="button" class="strip-arrow" (click)="scrollDays(-1)" aria-label="Jours précédents">‹</button>
+        <div class="days_scroll" #daysScroll>
+          <button
+            *ngFor="let d of openDays"
+            type="button"
+            class="day_block"
+            [class.select_day]="selectedDay?.day === d.day"
+            (click)="selectDay(d)">
+            <span *ngIf="d.badge" class="day-badge">{{ d.badge }}</span>
+            <span class="day-num">{{ d.day }}</span>
+            <span class="day-short">{{ d.shortName | uppercase }}</span>
+          </button>
+        </div>
+        <button type="button" class="strip-arrow" (click)="scrollDays(1)" aria-label="Jours suivants">›</button>
+      </div>
+    </section>
+
+    <!-- ÉTAPE 03 : CRÉNEAU HORAIRE -->
+    <section class="rdv-step">
+      <div class="step-label">
+        <span class="step-num">03</span>
+        <h2>CRÉNEAU HORAIRE</h2>
+      </div>
+
+      <span class="form_error">
+        <span *ngIf="submitted && f['hours'].errors?.['required']">
+          <p>Veuillez choisir un créneau horaire</p>
+        </span>
+      </span>
+
+      <div class="hours_scroll">
+        <p *ngIf="!selectedDay" class="hours-placeholder">
+          Sélectionnez d'abord une date pour afficher les créneaux disponibles.
+        </p>
+
+        <p *ngIf="selectedDay && loadingHours && scheduleArray.length === 0" class="hours-placeholder">
+          Chargement des créneaux…
+        </p>
+
+        <p *ngIf="selectedDay && !loadingHours && scheduleArray.length === 0" class="hours-placeholder">
+          Aucun créneau configuré pour cette journée.
+        </p>
+
+        <ul *ngIf="selectedDay && scheduleArray.length > 0" class="hour_list">
+          <li *ngFor="let slot of scheduleArray; let i = index">
+            <button
+              type="button"
+              class="hour_block"
+              [disabled]="unavailableSlots[i]"
+              [class.unavailable_hour]="unavailableSlots[i]"
+              [class.select_hour]="selectedHour === slot"
+              (click)="toggleHour(i)">
+              {{ slot }}
+            </button>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- RÉCAPITULATIF & VALIDATION -->
+    <section class="rdv-summary">
+      <div class="summary-rows">
+        <div class="summary-item">
+          <span class="summary-key">Prestation</span>
+          <span class="summary-val" [class.is-empty]="!rdvForm.get('type')?.value">
+            {{ selectedPrestation ? (selectedPrestation.name + (selectedPrestation.price ? ' · ' + selectedPrestation.price : '')) : 'À choisir' }}
+          </span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-key">Date</span>
+          <span class="summary-val" [class.is-empty]="!selectedDay">
+            {{ selectedDay ? (selectedDay.day + ' ' + (monthName | lowercase) + ' ' + year) : 'À choisir' }}
+          </span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-key">Heure</span>
+          <span class="summary-val" [class.is-empty]="!selectedHour">
+            {{ selectedHour || 'À choisir' }}
+          </span>
+        </div>
+      </div>
+
+      <button class="confirm-btn" type="submit" [disabled]="sending">
+        {{ sending ? 'VALIDATION EN COURS…' : 'CONFIRMER LE RENDEZ-VOUS' }}
+      </button>
+    </section>
+  </form>
 </div>

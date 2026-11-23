@@ -1,200 +1,243 @@
 <div class="admin_schedule_container">
-    <h1 class="mySchedule">MES HORAIRES</h1>
-    <div id="enable_days_RDV">
-        <h2>JOURS DE RDV</h2>
-        <ul class="enable_days_list">
-          <!-- Utilisez *ngFor pour parcourir daysWithIsBook et afficher chaque jour -->
-          <li *ngFor="let day of daysWithIsBook" [ngClass]="day.reservationClass">
-            <!-- Affichez le nom du jour -->
-            <p>{{ day.dayName }}</p>
-            <!-- Affichez le texte de réservation (Réservé ou Non réservé) -->
-            <div (click)="setReservationDay(day)" class="reservationBttn">
-                <p>{{ day.reservationStatus }}</p>
-            </div>
-          </li>
-        </ul>
+  <div class="admin-section-header">
+    <span class="cut_angle">
+      <h2>HORAIRES &amp; CONGÉS.</h2>
+    </span>
+    <p>Activez les jours réservables, planifiez vos congés et ajustez vos plages d'ouverture.</p>
+  </div>
+
+  <p *ngIf="isLoading" class="schedule-state">Chargement des horaires…</p>
+
+  <!-- Si aucun document horaires encore créé -->
+  <section *ngIf="!isLoading && !schedule" class="schedule-card empty-init">
+    <h3>Aucun horaire configuré</h3>
+    <p>Initialisez la semaine type du salon (mardi–samedi) en un clic, puis personnalisez-la librement.</p>
+    <button type="button" class="block-add-btn" [disabled]="initializing" (click)="initDefaultSchedule()">
+      {{ initializing ? 'INITIALISATION…' : 'INITIALISER LES HORAIRES PAR DÉFAUT' }}
+    </button>
+  </section>
+
+  <ng-container *ngIf="!isLoading && schedule">
+    <!-- 1. JOURS RÉSERVABLES EN LIGNE -->
+    <section class="schedule-card">
+      <div class="card-heading">
+        <h3>JOURS OUVERTS AUX RENDEZ-VOUS</h3>
+        <span class="heading-hint">Cliquez pour ouvrir ou fermer la réservation ce jour-là.</span>
       </div>
-    <span  class="cut_angle">
-        <h2>BLOCKED DAYS</h2>       
-    </span>
-    <div class="calendar_month" [ngClass]="{'collapsed': collapsed}" (click)="collapsed = !collapsed">
-        <p>{{monthName | uppercase}}</p>
-    </div>
 
-      
-    <div class="month_selector" [@collapse]="collapsed">
-        <ul>
-            <li #parentMonth (click)="setCurrentMonth($event);collapsed = !collapsed"  [class.newstyle]="currentMonth === mn.toUpperCase() && monthStatus != false" id="{{mn | uppercase}}" class="month_block" *ngFor="let mn of monthNames" >
-            <p  (click)="parentMonth.click();$event.stopPropagation();" id="{{mn | uppercase}}">{{mn | uppercase}}</p> 
-            </li> 
-        </ul> 
-    </div>
-    <div  class="calendar_days">        
-        <div class="days_scroll"  >
-            <ul class="days_list" *ngFor="let n of monthDaysArray; let i = index;">
-                <li>
-                    <span #blockedDay 
-                    [class.blocked_day]="currentDay === (i+1) || blockedDaysArray[i] == true" 
-                    id="{{i+1}}" 
-                    (click)="setCurrentDay($event,i)"    
-                    drag-scroll-item 
-                    class="day_block" 
-                    *ngIf="closedDaysArray[i] != false && passedDaysArray[i] != true">
-                <p (click)="blockedDay.click();$event.stopPropagation()">{{monthDaysArray[i]}}</p> 
-                <p (click)="blockedDay.click();$event.stopPropagation()">{{this.monthDaysName[i] | uppercase}}</p> 
-              </span>          
-                </li>
-            </ul>        
+      <ul class="enable_days_list" *ngIf="daysWithIsBook.length > 0">
+        <li *ngFor="let day of daysWithIsBook" class="day-toggle-row">
+          <span class="day-label">{{ day.dayName | uppercase }}</span>
+          <button
+            type="button"
+            class="toggle-pill"
+            [class.is-open]="day.isBook"
+            (click)="setReservationDay(day)">
+            {{ day.isBook ? 'RDV ouverts' : 'RDV fermés' }}
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 2. CONGÉS & JOURS BLOQUÉS -->
+    <section class="schedule-card">
+      <div class="card-heading">
+        <h3>CONGÉS &amp; FERMETURES EXCEPTIONNELLES</h3>
+        <span class="heading-hint">Bloquez un jour isolé ou toute une période (les dates sont bloquées côté serveur).</span>
+      </div>
+
+      <div class="leave-form">
+        <div class="leave-dates">
+          <label>
+            <span>DÉBUT</span>
+            <input type="date" [(ngModel)]="leaveStart">
+          </label>
+          <label>
+            <span>FIN (OPTIONNEL)</span>
+            <input type="date" [(ngModel)]="leaveEnd" [min]="leaveStart">
+          </label>
         </div>
-    </div>
-    <div class="blocked_days">
-        <ul >
-            <li *ngFor="let blockDay of blockDays" class="block_day_unit" id="block_day{{blockDay.id}}">
-                <div class="block_day_cont">
-                    <span class="block_day_text"><p>{{blockDay.dateFull}}</p></span>
-                    <span (click)="close_block_day(blockDay.id);" class="remove_block_day"  class="remove_block_day{{blockDay.id}}"><p>X</p></span>
-                </div>
-            </li>
-        </ul>
-    </div>
-    <span  class="cut_angle">
-        <h2 class="mySchedule">HEURES D'OUVERTURE</h2>
-    </span>
-    
-    <div class="open_hours">
-        <ul class="open_hours_list">
-            <li *ngFor="let day of scheduleKeys" class="open_hours_unit">
-              <span  class="cut_angle">
-                <h3>{{ day | uppercase}}</h3>
-              </span>
-              <span *ngFor="let hour of schedule[day]">                
-                <div class="hours_settings">
-                    <span><h4>MATIN :</h4></span>
-                    <div class="hours_set_unit">
-                        <span><h5>OUVERTURE :</h5></span>
-                        <span class="hours_set_unit_open" id="hours_set_unit_open_{{day}}">
-                            <input 
-                                [ngClass]="{
-                                    'border-solid-white-1': hour.start1 !== '',
-                                    'border-solid-white-0-4': hour.start1 === ''
-                                }" 
-                                maxlength="2" 
-                                id="hours_morning_start1_{{day}}" 
-                                type="text" 
-                                [(ngModel)]="hour.start1.split(':')[0]" 
-                                (blur)="setSchedule('morning_start1_' + day)" 
-                                [disabled]="hour.start1 === ''"
-                            >
-                            <span class="separate">:</span>
-                            <input 
-                                [ngClass]="{
-                                    'border-solid-white-1': hour.start1 !== '',
-                                    'border-solid-white-0-4': hour.start1 === ''
-                                }" 
-                                maxlength="2" 
-                                id="minutes_morning_start1_{{day}}" 
-                                type="text" 
-                                [(ngModel)]="hour.start1.split(':')[1]" 
-                                (blur)="setSchedule('morning_start1_' + day)" 
-                                [disabled]="hour.start1 === ''"
-                            >
-                            <div (click)="toggleLock('morning_start1_' + day)"><img id="block_img_morning_start1_{{day}}" [src]="hour.start1 ? 'assets/BLOCKED.svg' : 'assets/BLOCKED_RED.svg'" [class.red]="!hour.start1 "/> </div>
-                        </span>   
-                        <span><h5>FERMETURE :</h5></span>                 
-                        <span class="hours_set_unit_closed" id="hours_set_unit_closed_{{day}}">
-                            <input 
-                                [ngClass]="{
-                                    'border-solid-white-1': hour.end1 !== '',
-                                    'border-solid-white-0-4': hour.end1 === ''
-                                }" 
-                                maxlength="2"
-                                id="hours_morning_end1_{{day}}" 
-                                type="text" 
-                                [(ngModel)]="hour.end1.split(':')[0]" 
-                                (blur)="setSchedule('morning_end1_' + day)" 
-                                [disabled]="hour.end1 === ''"
-                             >
-                            <span class="separate">:</span>
-                            <input 
-                                [ngClass]="{
-                                    'border-solid-white-1': hour.end1 !== '',
-                                    'border-solid-white-0-4': hour.end1 === ''
-                                }" 
-                                maxlength="2" 
-                                id="minutes_morning_end1_{{day}}" 
-                                type="text" 
-                                [(ngModel)]="hour.end1.split(':')[1]" 
-                                (blur)="setSchedule('morning_end1_' + day)" 
-                                [disabled]="hour.end1 === ''"
-                            >
-                            <div (click)="toggleLock('morning_end1_' + day)"><img id="block_img_morning_end1_{{day}}" [src]="hour.end1 ? 'assets/BLOCKED.svg' : 'assets/BLOCKED_RED.svg'" [class.red]="!hour.end1 "/> </div>
-                        </span>
-                    </div>
-                </div>
-                <div class="hours_settings">
-                    <span><h4>APRÈS MIDI :</h4></span>
-                    <div class="hours_set_unit">
-                        <span><h5>OUVERTURE :</h5></span>
-                        <span class="hours_set_unit_open">
-                            <input 
-                                [ngClass]="{
-                                    'border-solid-white-1': hour.start2 !== '',
-                                    'border-solid-white-0-4': hour.start2 === ''
-                                }" 
-                                maxlength="2" 
-                                id="hours_afternoon_start2_{{day}}" 
-                                type="text" 
-                                [(ngModel)]="hour.start2.split(':')[0]" 
-                                (blur)="setSchedule('morning_start2_' + day)" 
-                                [disabled]="hour.start2 === ''"
-                            >
-                            <span class="separate">:</span>
-                            <input  [ngClass]="{
-                                'border-solid-white-1': hour.start2 !== '',
-                                'border-solid-white-0-4': hour.start2 === ''
-                              }" 
-                              maxlength="2" 
-                              id="minutes_afternoon_start2_{{day}}" 
-                              type="text" 
-                              [(ngModel)]="hour.start2.split(':')[1]" 
-                              (blur)="setSchedule('morning_start2_' + day)" 
-                              [disabled]="hour.start2 === ''">
-                            <div (click)="toggleLock('afternoon_start2_' + day)"><img id="block_img_afternoon_start2_{{day}}"  src="assets/BLOCKED.svg" [src]="hour.start2 ? 'assets/BLOCKED.svg' : 'assets/BLOCKED_RED.svg'" [class.red]="!hour.start2 "/> </div>
-                        </span>               
-                        <span><h5>FERMETURE :</h5></span>   
-                        <span class="hours_set_unit_closed">
-                            <input 
-                                [ngClass]="{
-                                    'border-solid-white-1': hour.end2 !== '',
-                                    'border-solid-white-0-4': hour.end2 === ''
-                                }" 
-                                maxlength="2" 
-                                id="hours_afternoon_end2_{{day}}" 
-                                type="text" 
-                                [(ngModel)]="hour.end2.split(':')[0]" 
-                                (blur)="setSchedule('morning_end2_' + day)" 
-                                [disabled]="hour.end2 === ''"
-                            >
-                            <span class="separate">:</span>
-                            <input
-                                [ngClass]="{
-                                    'border-solid-white-1': hour.end2 !== '',
-                                    'border-solid-white-0-4': hour.end2 === ''
-                                }" 
-                                maxlength="2" 
-                                id="minutes_afternoon_end2_{{day}}" 
-                                type="text" 
-                                [(ngModel)]="hour.end2.split(':')[1]" 
-                                (blur)="setSchedule('morning_end2_' + day)" 
-                                [disabled]="hour.end2 === ''"
-                             >
-                            <div (click)="toggleLock('afternoon_end2_' + day)"><img id="block_img_afternoon_end2_{{day}}" [src]="hour.end2 ? 'assets/BLOCKED.svg' : 'assets/BLOCKED_RED.svg'" [class.red]="!hour.end2 "/></div>
-                        </span>
-                    </div>
-                </div>
-              </span>
-            </li>
-          </ul>
-    </div>
-</div>
+        <div class="leave-bottom">
+          <input
+            type="text"
+            maxlength="80"
+            placeholder="Motif (optionnel, ex. Congés d'hiver)"
+            [(ngModel)]="leaveLabel">
+          <button type="button" class="block-add-btn" [disabled]="savingLeave" (click)="addLeavePeriod()">
+            {{ savingLeave ? 'BLOCAGE…' : 'BLOQUER' }}
+          </button>
+        </div>
+      </div>
 
+      <p *ngIf="leaves.length === 0" class="schedule-empty">Aucun jour ou congé bloqué actuellement.</p>
+
+      <ul *ngIf="leaves.length > 0" class="blocked-chips">
+        <li *ngFor="let leave of leaves" class="blocked-chip">
+          <div class="chip-text">
+            <strong>{{ formatLeaveRange(leave) }}</strong>
+            <span *ngIf="leave.label" class="chip-label">{{ leave.label }}</span>
+          </div>
+          <button
+            type="button"
+            class="chip-remove"
+            (click)="removeLeave(leave)"
+            aria-label="Retirer cette période">
+            ✕
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 3. PLAGES D'OUVERTURE PAR JOUR -->
+    <section class="schedule-card" *ngIf="scheduleKeys.length > 0">
+      <div class="card-heading card-heading-row">
+        <div>
+          <h3>HEURES D'OUVERTURE</h3>
+          <span class="heading-hint">Chaque modification est validée et enregistrée automatiquement.</span>
+        </div>
+        <button
+          type="button"
+          class="ghost-action-btn"
+          [disabled]="resetting"
+          (click)="resetDefaultSchedule()">
+          {{ resetting ? 'RÉINITIALISATION…' : 'RÉINITIALISER LA SEMAINE' }}
+        </button>
+      </div>
+
+      <ul class="open_hours_list">
+        <li *ngFor="let day of scheduleKeys" class="open_hours_unit">
+          <div class="day-header">
+            <span class="cut_angle">
+              <h3>{{ day | uppercase }}</h3>
+            </span>
+            <button
+              type="button"
+              class="copy-day-btn"
+              [disabled]="copyingDay !== null"
+              (click)="copyToWeekdays(day)"
+              title="Appliquer ces horaires du mardi au vendredi">
+              {{ copyingDay === day ? 'COPIE…' : 'COPIER → MAR–VEN' }}
+            </button>
+          </div>
+
+          <div class="half-days-grid" *ngFor="let hour of schedule[day]">
+            <!-- MATIN -->
+            <div class="half-day-box" [class.is-closed]="!hour.start1 && !hour.end1">
+              <div class="half-day-top">
+                <span class="half-day-title">MATIN</span>
+                <button type="button" class="mini-toggle" (click)="toggleHalfDay(day, 'morning')">
+                  {{ hour.start1 || hour.end1 ? 'Fermer' : 'Ouvrir' }}
+                </button>
+              </div>
+              <div class="time-pair" *ngIf="hour.start1 || hour.end1">
+                <label>
+                  <span>De</span>
+                  <input
+                    type="time"
+                    [ngModel]="hour.start1"
+                    (change)="onTimeChange(day, 'start1', $any($event.target).value)">
+                </label>
+                <label>
+                  <span>À</span>
+                  <input
+                    type="time"
+                    [ngModel]="hour.end1"
+                    (change)="onTimeChange(day, 'end1', $any($event.target).value)">
+                </label>
+              </div>
+              <p class="closed-note" *ngIf="!hour.start1 && !hour.end1">Fermé le matin</p>
+            </div>
+
+            <!-- APRÈS-MIDI -->
+            <div class="half-day-box" [class.is-closed]="!hour.start2 && !hour.end2">
+              <div class="half-day-top">
+                <span class="half-day-title">APRÈS-MIDI</span>
+                <button type="button" class="mini-toggle" (click)="toggleHalfDay(day, 'afternoon')">
+                  {{ hour.start2 || hour.end2 ? 'Fermer' : 'Ouvrir' }}
+                </button>
+              </div>
+              <div class="time-pair" *ngIf="hour.start2 || hour.end2">
+                <label>
+                  <span>De</span>
+                  <input
+                    type="time"
+                    [ngModel]="hour.start2"
+                    (change)="onTimeChange(day, 'start2', $any($event.target).value)">
+                </label>
+                <label>
+                  <span>À</span>
+                  <input
+                    type="time"
+                    [ngModel]="hour.end2"
+                    (change)="onTimeChange(day, 'end2', $any($event.target).value)">
+                </label>
+              </div>
+              <p class="closed-note" *ngIf="!hour.start2 && !hour.end2">Fermé l'après-midi</p>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 4. PRESTATIONS & TARIFS -->
+    <section class="schedule-card">
+      <div class="card-heading card-heading-row">
+        <div>
+          <h3>PRESTATIONS &amp; TARIFS</h3>
+          <span class="heading-hint">Visibles lors de la réservation et dans la fiche Horaires &amp; Infos.</span>
+        </div>
+        <button type="button" class="ghost-action-btn" (click)="addPrestationRow()">
+          + AJOUTER
+        </button>
+      </div>
+
+      <div class="prestations-editor">
+        <div class="prestation-edit-row" *ngFor="let item of prestations; let i = index; trackBy: trackByIndex">
+          <label class="field-name">
+            <span>PRESTATION</span>
+            <input
+              type="text"
+              maxlength="48"
+              placeholder="Ex. COUPE & BARBE"
+              [(ngModel)]="item.name" />
+          </label>
+          <label class="field-duration">
+            <span>DURÉE (MIN)</span>
+            <input
+              type="number"
+              min="10"
+              max="240"
+              step="5"
+              [(ngModel)]="item.durationMin" />
+          </label>
+          <label class="field-price">
+            <span>TARIF</span>
+            <input
+              type="text"
+              maxlength="20"
+              placeholder="Ex. 35 €"
+              [(ngModel)]="item.price" />
+          </label>
+          <button
+            type="button"
+            class="row-remove-btn"
+            (click)="removePrestationRow(i)"
+            title="Supprimer cette prestation"
+            aria-label="Supprimer cette prestation">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <div class="prestations-actions">
+        <button
+          type="button"
+          class="block-add-btn"
+          [disabled]="savingPrestations"
+          (click)="savePrestations()">
+          {{ savingPrestations ? 'ENREGISTREMENT…' : 'ENREGISTRER LES TARIFS' }}
+        </button>
+      </div>
+    </section>
+  </ng-container>
+</div>

@@ -19,10 +19,10 @@ const routes: Routes = [
   {path : 'cafeCiseaux',component:CafeCiseauComponentList},
   {path : 'bar',component:BarComponent},
   {path: 'register', component: RegisterComponent},
-  {path: 'file-upload', component: FileUploadComponent},
+  {path: 'file-upload', canActivate: [AuthGuard], component: FileUploadComponent},
   {path : 'verify-email-address',component:VerifyEmailComponent},
   {path : 'policy',component:PolicyComponent},
-  {path : 'beer-selection',canActivate: [AuthGuard],component:BeerSelectionComponent},
+  {path : 'beer-selection',component:BeerSelectionComponent},
   {path : 'reset-password',component:ResetPasswordComponent},
   {path: 'login-demo',canActivate: [AuthGuard], component: LoginDemoComponent},
   {path: 'login',canActivate: [AuthGuard], component: LoginComponent},
@@ -30,6 +30,7 @@ const routes: Routes = [
   {path: 'user-message',canActivate: [AuthGuard], component: UserMessageComponent},
   {path: 'profile',canActivate: [AuthGuard], component: ProfileComponent},
   {path: 'admin',canActivate: [AuthGuard], loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule)},
+  {path: '**', redirectTo: ''}
 
 
 ];

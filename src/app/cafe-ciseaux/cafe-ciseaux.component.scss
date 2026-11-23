@@ -1,12 +1,156 @@
+.salon-hero {
+  .salon-top-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
 
-.oneLike {
-  background-color: rgba(lightgreen, 0.4);
-  color: darkgreen;
-  button {
-    box-shadow: lightgreen 3px 3px 7px;
-    color: darkgreen;
-    &:active {
-      box-shadow: lightgreen 0 0 5px;
+  .home-comm-banner {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background-color: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-top: 1px solid var(--border-subtle);
+    border-right: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .comm-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+
+      strong {
+        font-family: var(--font-display);
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--ink);
+      }
+    }
+
+    .comm-badge {
+      font-family: var(--font-display);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      padding: 2px 8px;
+      background-color: var(--accent);
+      color: var(--bg);
+      border-radius: var(--radius);
+    }
+
+    p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--ink-muted);
+      white-space: pre-line;
+    }
+  }
+
+  .open-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 13px;
+    background: linear-gradient(135deg, rgba(196, 69, 54, 0.28) 0%, rgba(196, 69, 54, 0.12) 100%);
+    border: 1px solid rgba(229, 130, 118, 0.6);
+    border-radius: 4px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: #ffe0dc;
+    box-shadow: 0 6px 20px rgba(196, 69, 54, 0.18);
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #f07668;
+      box-shadow: 0 0 8px rgba(240, 118, 104, 0.85);
+      flex: none;
+    }
+
+    &.is-open {
+      background: linear-gradient(135deg, rgba(62, 142, 92, 0.32) 0%, rgba(62, 142, 92, 0.14) 100%);
+      border-color: rgba(82, 184, 120, 0.68);
+      color: #e6faee;
+      box-shadow: 0 6px 20px rgba(62, 142, 92, 0.22);
+
+      .status-dot {
+        background-color: #4dc47c;
+        box-shadow: 0 0 8px rgba(77, 196, 124, 0.85);
+      }
+    }
+  }
+
+  .salon-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+
+    a {
+      flex: 1 1 180px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 20px;
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      border-radius: var(--radius);
+      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .cta-primary {
+      background-color: var(--ink);
+      color: var(--bg);
+      border: 1px solid var(--ink);
+
+      &:hover {
+        background-color: var(--accent);
+        border-color: var(--accent);
+      }
+    }
+
+    .cta-secondary {
+      background-color: transparent;
+      color: var(--ink);
+      border: 1px solid var(--border-strong);
+
+      &:hover {
+        background-color: var(--ink);
+        color: var(--bg);
+      }
+    }
+  }
+
+  .salon-location {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 18px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.85;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 1;
+      text-decoration: underline;
+      text-underline-offset: 4px;
     }
   }
 }

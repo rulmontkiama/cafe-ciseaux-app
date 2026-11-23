@@ -11,6 +11,8 @@ import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/compat
 import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { Observable, firstValueFrom } from 'rxjs';
 import firebase from 'firebase/compat/app';
+import { GoogleAuthProvider, OAuthProvider } from 'firebase/auth';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 @Injectable({
   providedIn: 'root',
 })
@@ -18,6 +20,8 @@ export class AuthenticationService {
   //currentUser$ = authState(this.auth);
   userData: any
   existingAdminIds: any[] = [];
+  private googleProviderCtor: any = null;
+  private oAuthProviderCtor: any = null;
   constructor( 
     public afAuth: AngularFireAuth, // Inject Firebase auth service
     public router: Router,
@@ -27,6 +31,15 @@ export class AuthenticationService {
     public ngZone: NgZone,    
     private usersService:UsersService
     ){
+     // Précharge les constructeurs depuis la même instance Firebase que AngularFireAuth
+     // (évite auth/argument-error lorsque @angular/fire utilise sa propre copie interne de firebase)
+     Promise.resolve((this.afAuth as any).app)
+       .then((app: any) => {
+         this.googleProviderCtor = app?.firebase?.auth?.GoogleAuthProvider ?? null;
+         this.oAuthProviderCtor = app?.firebase?.auth?.OAuthProvider ?? null;
+       })
+       .catch(() => {});
+
      this.afAuth.authState.subscribe((user) => {
         if (user) {
           this.userData = user;
@@ -44,26 +57,41 @@ export class AuthenticationService {
     get authState$(): Observable<firebase.User | null> {
       return this.afAuth.authState;
     }
-    async deleteAccount(uid: string): Promise<void> {
+    async deleteAccount(uid: string): Promise<boolean> {
+      const user = await this.afAuth.currentUser;
+      if (!user) {
+        throw new Error("L'utilisateur n'est pas authentifié.");
+      }
+
+      const confirmation = window.confirm(
+        'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.'
+      );
+      if (!confirmation) {
+        return false;
+      }
+
+      // Sauvegarde temporaire du profil pour le restaurer si Firebase exige une reconnexion récente
+      const userDocRef = this.db.collection('users').doc(uid);
+      const snap = await firstValueFrom(userDocRef.get());
+      const backup = snap?.exists ? snap.data() : null;
+
       try {
-        // Vérifier l'authentification de l'utilisateur
-        const user = await this.afAuth.currentUser;
-        if (!user) {
-          throw new Error('L\'utilisateur n\'est pas authentifié.');
+        if (backup) {
+          await userDocRef.delete();
         }
-  
-        // Demander une confirmation de suppression
-        const confirmation = window.confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.');
-  
-        if (confirmation) {
-          // Supprimer le compte
-          await this.db.collection('users').doc(uid).delete();
-          await user.delete();
-          
-         
-        } else {
-        }
+        await user.delete();
+        this.clearStorage();
+        this.router.navigate(['/']);
+        return true;
       } catch (error) {
+        // Restaure le profil Firestore pour éviter un compte orphelin si user.delete() échoue
+        if (backup) {
+          try {
+            await userDocRef.set(backup);
+          } catch (restoreErr) {
+            console.error('Impossible de restaurer le profil après échec :', restoreErr);
+          }
+        }
         console.error('Une erreur s\'est produite lors de la suppression du compte :', error);
         throw error;
       }
@@ -108,13 +136,16 @@ export class AuthenticationService {
    */
   async login(email: string, password: string): Promise<boolean> {
     try {
-      const result: any = await this.afAuth.signInWithEmailAndPassword(email, password);
+      const cleanEmail = (email || '').trim();
+      const result: any = await this.afAuth.signInWithEmailAndPassword(cleanEmail, password);
       const ok = await this.hydrateSession(result.user);
       if (!ok) {
         await this.afAuth.signOut();
         throw new Error('PROFILE_NOT_FOUND');
       }
-      this.router.navigate(['profile']);
+      const adminIds = this.getAdminId();
+      const targetRoute = Array.isArray(adminIds) && adminIds.includes(result.user.uid) ? 'admin' : 'profile';
+      this.router.navigate([targetRoute]);
       return true;
     } catch (error: any) {
       // Firebase v10 renvoie auth/invalid-credential (plus seulement auth/wrong-password)
@@ -139,60 +170,104 @@ export class AuthenticationService {
         this.router.navigate(['verify-email-address']);
       });
   }
-  // Reset Forggot password
-  ForgotPassword(passwordResetEmail: string) {
-    return this.afAuth
-      .sendPasswordResetEmail(passwordResetEmail)
-      .then(() => {
-        window.alert('Password reset email sent, check your inbox.');
-      })
-      .catch((error) => {
-        window.alert(error);
-      });
+  // Réinitialisation du mot de passe (retourne la Promise pour que le composant affiche le toast adapté)
+  ForgotPassword(passwordResetEmail: string): Promise<void> {
+    return this.afAuth.sendPasswordResetEmail((passwordResetEmail || '').trim());
   }
-  /**
-   * Connexion avec Google ou Apple (fenêtre popup Firebase).
-   * Crée le profil Firestore au premier passage, puis charge la session locale.
-   * Retourne true si connecté ; rejette avec l'erreur Firebase (ou PROFILE_NOT_FOUND,
-   * SOCIAL_NOT_SUPPORTED_NATIVE) sinon : voir socialLoginErrorMessage().
-   */
-  async loginWithProvider(providerName: 'google' | 'apple'): Promise<boolean> {
-    // Dans l'app mobile (WebView), Google refuse les popups et Apple exige un plugin natif
-    if (Capacitor.isNativePlatform()) {
-      throw new Error('SOCIAL_NOT_SUPPORTED_NATIVE');
+  private async getAuthConstructors(): Promise<{ GoogleProviderCtor: any; OAuthProviderCtor: any }> {
+    if (!this.googleProviderCtor || !this.oAuthProviderCtor) {
+      const app: any = await Promise.resolve((this.afAuth as any).app);
+      this.googleProviderCtor = app?.firebase?.auth?.GoogleAuthProvider || GoogleAuthProvider;
+      this.oAuthProviderCtor = app?.firebase?.auth?.OAuthProvider || OAuthProvider;
     }
-    let provider: any;
-    if (providerName === 'google') {
-      provider = new firebase.auth.GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-    } else {
-      provider = new firebase.auth.OAuthProvider('apple.com');
-      provider.addScope('email');
-      provider.addScope('name');
-    }
-    const result: any = await this.afAuth.signInWithPopup(provider);
-    const user = result?.user;
+    return {
+      GoogleProviderCtor: this.googleProviderCtor,
+      OAuthProviderCtor: this.oAuthProviderCtor
+    };
+  }
+
+  private async finalizeSocialLogin(user: any, fallbackDisplayName?: string | null): Promise<boolean> {
     if (!user) {
       return false;
     }
-    await this.ensureSocialProfile(user);
+    await this.ensureSocialProfile(user, fallbackDisplayName);
     const ok = await this.hydrateSession(user);
     if (!ok) {
       await this.afAuth.signOut();
       throw new Error('PROFILE_NOT_FOUND');
     }
-    this.router.navigate(['profile']);
+    const adminIds = this.getAdminId();
+    const targetRoute = Array.isArray(adminIds) && adminIds.includes(user.uid) ? 'admin' : 'profile';
+    this.router.navigate([targetRoute]);
     return true;
   }
+
+  /**
+   * Connexion avec Google (SDK natif sur iOS/Android via Capacitor, popup Firebase sur Web).
+   * Crée le profil Firestore au premier passage, puis charge la session locale.
+   */
+  async loginWithGoogle(): Promise<boolean> {
+    const { GoogleProviderCtor } = await this.getAuthConstructors();
+
+    if (Capacitor.isNativePlatform()) {
+      const nativeRes = await FirebaseAuthentication.signInWithGoogle();
+      const idToken = nativeRes?.credential?.idToken;
+      const accessToken = nativeRes?.credential?.accessToken;
+      if (!idToken) {
+        return false;
+      }
+      const credential = GoogleProviderCtor.credential(idToken, accessToken || null);
+      const result: any = await this.afAuth.signInWithCredential(credential);
+      return this.finalizeSocialLogin(result?.user, nativeRes?.user?.displayName);
+    }
+
+    const provider = new GoogleProviderCtor();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const result: any = await this.afAuth.signInWithPopup(provider);
+    return this.finalizeSocialLogin(result?.user);
+  }
+
+  /**
+   * Connexion avec Apple (SDK natif Sign in with Apple sur iOS / OAuth natif sur Android,
+   * popup Firebase OAuthProvider('apple.com') sur Web).
+   */
+  async loginWithApple(): Promise<boolean> {
+    const { OAuthProviderCtor } = await this.getAuthConstructors();
+
+    if (Capacitor.isNativePlatform()) {
+      const nativeRes = await FirebaseAuthentication.signInWithApple();
+      const idToken = nativeRes?.credential?.idToken;
+      const rawNonce = nativeRes?.credential?.nonce;
+      if (!idToken) {
+        return false;
+      }
+      const provider = new OAuthProviderCtor('apple.com');
+      const credential = provider.credential({
+        idToken,
+        rawNonce: rawNonce || undefined
+      });
+      const result: any = await this.afAuth.signInWithCredential(credential);
+      return this.finalizeSocialLogin(result?.user, nativeRes?.user?.displayName);
+    }
+
+    const provider = new OAuthProviderCtor('apple.com');
+    provider.addScope('email');
+    provider.addScope('name');
+    provider.setCustomParameters({ locale: 'fr' });
+    const result: any = await this.afAuth.signInWithPopup(provider);
+    return this.finalizeSocialLogin(result?.user);
+  }
+
   /** Crée users/<uid> s'il n'existe pas (nom et prénom tirés du nom affiché du compte). */
-  private async ensureSocialProfile(user: any): Promise<void> {
+  private async ensureSocialProfile(user: any, fallbackDisplayName?: string | null): Promise<void> {
     const existing = await this.usersService.getUser(user.uid);
     if (existing && existing[0]) {
       return;
     }
-    const parts = (user.displayName || '').trim().split(/\s+/).filter(Boolean);
-    // Apple ne fournit pas toujours le nom : on prend alors le début de l'e-mail
-    const prenom = parts[0] || (user.email || '').split('@')[0] || '';
+    const rawName = (user.displayName || fallbackDisplayName || '').trim();
+    const parts = rawName.split(/\s+/).filter(Boolean);
+    // Si le nom affiché est absent (ex. relai privé Apple), on prend le début de l'e-mail comme prénom
+    const prenom = parts[0] || (user.email || '').split('@')[0] || 'client';
     const nom = parts.slice(1).join(' ');
     const userData: Users = {
       uid: user.uid,
@@ -200,33 +275,48 @@ export class AuthenticationService {
       nom: nom.toLowerCase(),
       prenom: prenom.toLowerCase(),
       birthdate: '',
+      phone: '',
       scissor: 0,
       avatar: user.photoURL || 'assets/AVATAR.svg',
     };
     await this.db.doc(`users/${user.uid}`).set(userData);
   }
-  /** Message à afficher pour une erreur de connexion Google/Apple, ou null s'il faut rester silencieux. */
+  /** Message à afficher pour une erreur de connexion Google / Apple, ou null si annulé par l'utilisateur. */
   socialLoginErrorMessage(error: any): string | null {
-    switch (error?.code) {
-      case 'auth/popup-closed-by-user':
-      case 'auth/cancelled-popup-request':
-        return null; // l'utilisateur a fermé la fenêtre : pas une erreur
+    const code = String(error?.code || '');
+    const rawMsg = String(error?.message || '').toLowerCase();
+
+    // Annulation volontaire par l'utilisateur (Web, iOS Google/Apple, Android)
+    if (
+      code === 'auth/popup-closed-by-user' ||
+      code === 'auth/cancelled-popup-request' ||
+      code === '12501' ||
+      code === '1001' ||
+      code === '-5' ||
+      rawMsg.includes('cancel') ||
+      rawMsg.includes('user_canceled') ||
+      rawMsg.includes('1001')
+    ) {
+      return null;
+    }
+
+    switch (code) {
       case 'auth/popup-blocked':
         return 'la fenêtre de connexion a été bloquée par le navigateur, autorisez les popups pour ce site';
       case 'auth/account-exists-with-different-credential':
         return "un compte existe déjà avec cet e-mail : connectez-vous avec votre mot de passe ou avec l'autre méthode";
       case 'auth/operation-not-allowed':
-        return "cette méthode de connexion n'est pas activée";
+        return "cette méthode de connexion n'est pas encore activée dans Firebase";
       case 'auth/unauthorized-domain':
         return "ce site n'est pas autorisé dans Firebase (Authentication > Paramètres > Domaines autorisés)";
       case 'auth/network-request-failed':
         return 'vérifiez votre connexion internet';
     }
+    if (rawMsg.includes('1000') || rawMsg.includes('authorizationerror')) {
+      return 'Sign in with Apple nécessite la signature développeur Apple sur cet appareil';
+    }
     if (error?.message === 'PROFILE_NOT_FOUND') {
       return "votre compte n'a pas de profil, contactez le salon";
-    }
-    if (error?.message === 'SOCIAL_NOT_SUPPORTED_NATIVE') {
-      return "la connexion Google/Apple n'est pas encore disponible dans l'application mobile, utilisez votre e-mail";
     }
     console.error(error);
     return 'connexion impossible, réessayez';
@@ -246,6 +336,7 @@ export class AuthenticationService {
       nom: user.nom,
       prenom: user.prenom,
       birthdate: user.birthdate || '',
+      phone: (user.phone || '').trim(),
       scissor: 0,
       avatar: user.avatar,
     };
@@ -253,38 +344,46 @@ export class AuthenticationService {
       merge: true,
     });
   }
-// Sign Up : retourne true si le compte ET le profil ont bien été créés
-  async signUp(registerForm:any): Promise<boolean> {
-    const { email, password } = registerForm;
-    try {
-      const result: any = await this.afAuth.createUserWithEmailAndPassword(email, password);
-      const user = result.user;
-      // Avatar par défaut : image locale de l'app (assets/AVATAR.svg). Si Firebase Storage est activé
-      // (environment.useStorage), on utilise plutôt celle de Storage, avec l'image locale en secours.
-      let avatarUrl = 'assets/AVATAR.svg';
-      if (environment.useStorage) {
-        try {
-          avatarUrl = await firstValueFrom(this.storage.ref('images/AVATAR.svg').getDownloadURL());
-        } catch (e) {
-          console.warn('images/AVATAR.svg introuvable dans Firebase Storage : avatar local utilisé', e);
-        }
+  // Sign Up : crée le compte Auth, le profil Firestore et la session locale
+  async signUp(registerForm: any): Promise<boolean> {
+    const cleanEmail = (registerForm.email || '').trim().toLowerCase();
+    const { password } = registerForm;
+    const result: any = await this.afAuth.createUserWithEmailAndPassword(cleanEmail, password);
+    const user = result.user;
+    // Avatar par défaut : image locale de l'app (assets/AVATAR.svg). Si Firebase Storage est activé
+    // (environment.useStorage), on utilise plutôt celle de Storage, avec l'image locale en secours.
+    let avatarUrl = 'assets/AVATAR.svg';
+    if (environment.useStorage) {
+      try {
+        avatarUrl = await firstValueFrom(this.storage.ref('images/AVATAR.svg').getDownloadURL());
+      } catch (e) {
+        console.warn('images/AVATAR.svg introuvable dans Firebase Storage : avatar local utilisé', e);
       }
-      registerForm.avatar = avatarUrl;
-      registerForm.uid = user.uid;
-      await this.SetUserData(registerForm);
-      // L'utilisateur est déjà connecté côté Firebase : on charge sa session locale
-      await this.hydrateSession(user);
-      this.SendVerificationMail();
-      return true;
-    } catch (error: any) {
-      window.alert(error.message);
-      return false;
     }
+    const payload = {
+      ...registerForm,
+      email: cleanEmail,
+      nom: (registerForm.nom || '').trim().toLowerCase(),
+      prenom: (registerForm.prenom || '').trim().toLowerCase(),
+      avatar: avatarUrl,
+      uid: user.uid
+    };
+    await this.SetUserData(payload);
+    // L'utilisateur est déjà connecté côté Firebase : on charge sa session locale
+    await this.hydrateSession(user);
+    await this.SendVerificationMail().catch((err) => {
+      console.warn('Envoi e-mail de vérification différé :', err);
+      this.router.navigate(['verify-email-address']);
+    });
+    return true;
   }
 
     // Sign out
     SignOut() {
-      this.clearStorage()
+      this.clearStorage();
+      if (Capacitor.isNativePlatform()) {
+        FirebaseAuthentication.signOut().catch(() => {});
+      }
       return this.afAuth.signOut().then(() => {
         this.router.navigate(['login']);
       });
@@ -322,9 +421,9 @@ export class AuthenticationService {
     
     return data.uid
 }
-getAdminId() {
-  return JSON.parse(localStorage.getItem('admin_id') || '{}');
-}
+  getAdminId() {
+    return JSON.parse(localStorage.getItem('admin_id') || '[]');
+  }
   clearStorage() {
       localStorage.clear();
   }

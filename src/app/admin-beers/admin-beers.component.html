@@ -1,32 +1,66 @@
-<div class="wrapper">
-    <div class="file_upload_container">
-      <input type="text" placeholder="Nom de la bière" id="beerName" [(ngModel)]="beerName">
-      <textarea id="beerDescription" placeholder="Description de la bière" [(ngModel)]="beerDescription"></textarea>
-      
-    <!-- Custom file input button -->
-    <input *ngIf="!useStorage" type="text" placeholder="URL de l'image (optionnel)" id="beerImageUrl" [(ngModel)]="imageUrl">
-    <div class="custom-file-input" *ngIf="useStorage">
-        <button type="button" (click)="fileInput.click()">Parcourir les fichiers</button>
-        <input type="file" #fileInput style="display: none;" (change)="onFileSelected($event)">
-    </div>
-
-      <!-- Bouton pour télécharger la bière -->
-      <button class="uploadBeer" type="button" (click)="uploadBeer()">Télécharger la bière</button>
-    </div>
+<div class="admin-beers-wrap">
+  <div class="admin-section-header">
+    <span class="cut_angle">
+      <h2>CARTE DES BIÈRES.</h2>
+    </span>
+    <p>Ajoutez ou retirez les bières proposées au bar.</p>
   </div>
-<div class="beers_container">
-    <h1>Liste des bières : </h1>
-    <ul class="beers_list">
-        <li *ngFor="let beer of allBeers" class="beerUnit">
-            <span (click)="confirmAndRemoveBeer(beer.id)"   class="removebeer">
-                <h2>X</h2>
-            </span>
-            <div class="beerImageContainer">
-                <img loading="lazy" decoding="async" src="{{beer.imageUrl}}">
-            </div>
-            <h2 class="cut_angle">{{beer.nom}}</h2>
-            <p>{{beer.description}}</p>
-        </li>
-    </ul>
-</div>  
 
+  <section class="beer-form-card">
+    <h3>AJOUTER UNE BIÈRE</h3>
+
+    <div class="field-group">
+      <label for="beerName">NOM</label>
+      <input type="text" placeholder="Ex. Peak Triple" id="beerName" [(ngModel)]="beerName">
+    </div>
+
+    <div class="field-group">
+      <label for="beerDescription">DESCRIPTION</label>
+      <textarea id="beerDescription" rows="3" placeholder="Notes de dégustation, degré d'alcool…" [(ngModel)]="beerDescription"></textarea>
+    </div>
+
+    <div class="field-group" *ngIf="!useStorage">
+      <label for="beerImageUrl">URL DE L'IMAGE (OPTIONNEL)</label>
+      <input type="text" placeholder="https://… (sinon image par défaut)" id="beerImageUrl" [(ngModel)]="imageUrl">
+    </div>
+
+    <div class="custom-file-input" *ngIf="useStorage">
+      <button type="button" class="file-btn" (click)="fileInput.click()">
+        {{ selectedFile ? selectedFile.name : 'Choisir une image' }}
+      </button>
+      <input type="file" #fileInput style="display: none;" accept="image/*" (change)="onFileSelected($event)">
+    </div>
+
+    <button class="uploadBeer" type="button" [disabled]="isSaving" (click)="uploadBeer()">
+      {{ isSaving ? 'ENREGISTREMENT…' : 'AJOUTER À LA CARTE' }}
+    </button>
+  </section>
+
+  <section class="beers_container">
+    <div class="list-header">
+      <h3>BIÈRES EN CARTE ({{ allBeers.length }})</h3>
+    </div>
+
+    <p *ngIf="isLoading" class="beers-state">Chargement de la carte…</p>
+    <p *ngIf="!isLoading && allBeers.length === 0" class="beers-state">Aucune bière dans la carte pour le moment.</p>
+
+    <ul *ngIf="!isLoading && allBeers.length > 0" class="beers_list">
+      <li *ngFor="let beer of allBeers" class="beerUnit">
+        <div class="beerImageContainer">
+          <img loading="lazy" decoding="async" [src]="beer.imageUrl || 'assets/BIERES.jpg'" [alt]="beer.nom || 'Bière'">
+        </div>
+        <div class="beer-body">
+          <div class="beer-top-row">
+            <span class="cut_angle">
+              <h2>{{ beer.nom | uppercase }}</h2>
+            </span>
+            <button type="button" class="removebeer" (click)="confirmAndRemoveBeer(beer.id)" aria-label="Supprimer cette bière">
+              Supprimer
+            </button>
+          </div>
+          <p>{{ beer.description }}</p>
+        </div>
+      </li>
+    </ul>
+  </section>
+</div>

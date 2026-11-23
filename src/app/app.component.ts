@@ -14,9 +14,10 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
-        this.isMsgUserPage = event.urlAfterRedirects === '/user-message';
-        this.isProfilePage = event.urlAfterRedirects === '/profile';
-        this.isAdminMsgPage = event.urlAfterRedirects === '/admin/admin-message';
+        const path = event.urlAfterRedirects.split('?')[0];
+        this.isMsgUserPage = path === '/user-message';
+        this.isProfilePage = path === '/profile';
+        this.isAdminMsgPage = path === '/admin/admin-message';
       }
     });
   }

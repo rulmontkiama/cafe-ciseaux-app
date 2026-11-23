@@ -1,5 +1,54 @@
 <div class="user_RDV">
-    <h1>MES RENDEZ VOUS</h1>
-    <app-calendar-view></app-calendar-view>
+  <div class="admin-section-header">
+    <div class="header-top-row">
+      <span class="cut_angle">
+        <h2>AGENDA.</h2>
+      </span>
+      <button type="button" class="add-manual-btn" (click)="showManualForm = !showManualForm">
+        {{ showManualForm ? 'FERMER' : '+ NOUVEAU RDV' }}
+      </button>
+    </div>
+    <p>Consultez vos rendez-vous ou ajoutez une réservation prise au téléphone / comptoir.</p>
+  </div>
 
+  <!-- Formulaire RDV manuel (téléphone / comptoir) -->
+  <section *ngIf="showManualForm" class="manual-rdv-card">
+    <h3>AJOUTER UN RDV MANUEL</h3>
+    <div class="manual-grid">
+      <div class="field-group">
+        <label for="mPrenom">PRÉNOM</label>
+        <input id="mPrenom" type="text" placeholder="Ex. Marc" [(ngModel)]="clientPrenom">
+      </div>
+      <div class="field-group">
+        <label for="mNom">NOM</label>
+        <input id="mNom" type="text" placeholder="Ex. Laurent" [(ngModel)]="clientNom">
+      </div>
+      <div class="field-group">
+        <label for="mPhone">TÉLÉPHONE (OPTIONNEL)</label>
+        <input id="mPhone" type="tel" placeholder="04XX XX XX XX" [(ngModel)]="clientPhone">
+      </div>
+      <div class="field-group">
+        <label for="mType">PRESTATION</label>
+        <select id="mType" [(ngModel)]="selectedType">
+          <option *ngFor="let p of prestations" [value]="p.name.toLowerCase()">
+            {{ p.name }}{{ p.price ? ' · ' + p.price : '' }}
+          </option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label for="mDate">DATE</label>
+        <input id="mDate" type="date" [(ngModel)]="manualDate">
+      </div>
+      <div class="field-group">
+        <label for="mTime">HEURE</label>
+        <input id="mTime" type="time" step="1200" [(ngModel)]="manualTime">
+      </div>
+    </div>
+
+    <button type="button" class="save-manual-btn" [disabled]="savingManual" (click)="createManualRdv()">
+      {{ savingManual ? 'ENREGISTREMENT…' : 'BLOQUER CE CRÉNEAU' }}
+    </button>
+  </section>
+
+  <app-calendar-view></app-calendar-view>
 </div>

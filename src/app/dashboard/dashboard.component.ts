@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AuthenticationService } from '../services/authentication.service';
 
 @Component({
@@ -6,19 +6,18 @@ import { AuthenticationService } from '../services/authentication.service';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
-export class DashboardComponent {
-  public nom!:string;
-  public prenom!:string;
-  public avatar!: string;
- constructor(
-  private authService:AuthenticationService,
- ){}
- async ngOnInit(){
-  var userInfos:any = this.authService.getUserInfos()
-  console.log(userInfos);
-  
-  this.nom = userInfos.nom
-  this.prenom = userInfos.prenom 
-  this.avatar = userInfos.avatar 
- }
+export class DashboardComponent implements OnInit {
+  public nom = '';
+  public prenom = '';
+  public avatar = 'assets/AVATAR.svg';
+
+  constructor(private authService: AuthenticationService) {}
+
+  ngOnInit(): void {
+    const userInfos: any = this.authService.getUserInfos();
+    if (!userInfos) return;
+    this.nom = userInfos.nom || '';
+    this.prenom = userInfos.prenom || '';
+    this.avatar = userInfos.avatar || 'assets/AVATAR.svg';
+  }
 }

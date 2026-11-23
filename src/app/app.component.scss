@@ -1,8 +1,5 @@
-h2{
-    font-size: 66vw;
-}
-.padding_block{
-    height: 15vw;
-    position: relative;
-    width: -webkit-fill-available;
+.padding_block {
+  height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+  position: relative;
+  width: 100%;
 }

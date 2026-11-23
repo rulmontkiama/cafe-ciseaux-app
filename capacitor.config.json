@@ -1,8 +1,14 @@
 {
-  "appId": "com.cafeciseaux.myapp",
-  "appName": "cafe-ciseaux",
+  "appId": "be.cafeciseaux.app",
+  "appName": "Café Ciseaux",
   "webDir": "dist/cafe_ciseaux",
   "server": {
     "androidScheme": "https"
+  },
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": ["google.com", "apple.com"]
+    }
   }
 }

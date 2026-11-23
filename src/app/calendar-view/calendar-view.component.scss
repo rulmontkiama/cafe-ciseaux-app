@@ -1,257 +1,350 @@
-.calendar{
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.calendar-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.calendarCommand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+
+  .month-title-block {
     display: flex;
     flex-direction: column;
-    position: relative;
-    p{
-        color: #ffffff;
-    }
-    .appointments-list{
-        width: 100%;
-        background-color: #000000;
-        .appointments-list-header{
-            display: flex;
-            justify-content: space-between;
-            .close-appointments{
-                background-color: red;
-                width: 7vw;
-                height: 7vw;
-                display: flex;
-                margin: auto;
-                margin-right: 0;
-                p{
-                    color: #ffffff;
-                    margin: auto;
-                }
-            }
+    align-items: center;
+    gap: 2px;
 
-        }
-    }
-    .calendar-header{
-        display: flex;
-        flex-direction: column;
-        margin: auto;
-        .montCount{
-            display: none;
-            margin-bottom: 3vw;;
-            .countUnit{
-                margin: auto;
-                width: max-content;
-                background-color: #ffffff;
-                border: solid #ffffff 0.3vw;
-                color: #0c0c0c;
-                border-radius: 1vw;
-            }
-            p{
-                text-align: center;
-                padding: 1vw;
-                font-size: 5vw;
-            }
-        }
-        .calendarCommand{
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            margin-bottom: 4vw;
-            border-bottom: solid #ffffff;
-            h2{
-                color: #ffffff;
-            }
-            button{
-                background-color: #ffffff;
-                border: 0;
-                color: black;
-                width: 10vw;
-                border-radius: 0.5vw;
-            }
-        }
-    }
-    .appointments-count{
-        display: flex;
-        
-        p{
-            margin: auto;
-            margin-top: 0.5vw;
-            margin-bottom: 0.5vw;
-        }
-    }
-    .hasRdv{
-        background-color: #45ff45;
-        color: #0c0c0c;
-        border-radius: 0.4vw;
-    }
-    .calendar-grid{
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        gap: 3vw;
-        .hasRdv{
-            display: flex !important;
-        }
-        .calendar-day{
-            padding: 3vw;
-            flex-direction: column;
-            width: 13vw;
-            height: 13vw;
-            margin-bottom: 2vw;
-            border: 0.35vw solid white;
-            border-radius: 2vw;
-            flex: 0 1 calc(14vw - 1vw);
-            margin-bottom: 10px;
-            display: none;
-            .day-number{
-                display: flex;
-                p{
-                    margin: auto;
-                    font-size: 5vw;
-                }
-            }
-            .day-name{
-                display: flex;
-                p{
-                    margin: auto;
-                }
-            }
-        }
-    } 
-    .has-passed{
-        opacity: 0.5;
-    }
-    .RDV_list{
-        .rdvUnit{
-            border-bottom: 0.5vw solid white;
-            border-top: 0.5vw solid white;
-            display: flex;
-            flex-direction: row;
-            padding-bottom: 4vw;
-            position: relative;
-            padding-top: 4vw;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            .RDV_delete{
-                position: absolute;
-                background-color: #ffffff;
-                display: flex;
-                width: 12vw;
-                height: 12vw;
-                right: 0;
-                border-radius: 40vw;
-                span{
-                    margin: auto;
-                    display: flex;
-                    width: 80%;
-                    height: 80%;
-                    img{
-                        width: 100%;
-                        height: 100%;
-                        object-fit: cover;
-                        object-position: center;
-                    }
-                }
-
-            }
-            .rdv_infos_container{
-                margin: auto;
-                margin-left: 5vw;
-            }
-            li{
-                display: flex;
-            }
-            .passedImg{
-                position: absolute;
-                height: 8vw;
-                right: 2vw;
-                z-index: 44;
-                opacity: 1;
-            }
-            .RDV_names{
-                h2{
-                    padding-right: 2vw;
-                    color: #0c0c0c;
-                    margin: auto;
-                }
-            }
-            .RDV_avatar{
-                position: relative;
-                display: flex;
-                width: 15vw;
-                border: 0.5vw solid white;
-                height: 15vw;
-                overflow: hidden;
-                .profile_user_pictures{
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    object-position: center;
-                }
-            }
-            .RDV_left_list{
-                display: flex;
-                flex-direction: column;
-                margin: auto;
-                margin-left: 0;
-                img{
-                    height: 5vw;
-                    margin: auto;
-                    margin-left: 0;
-                }
-                h1{
-                    padding-left: 1vw;
-                    padding-right: 1vw;
-                }
-                li{
-                    font-size: 2.5vw;
-                }
-                .scissor_block{
-                    display: flex;
-                    width: max-content;
-                    flex-direction: row;
-                    padding-bottom: 2vw;
-                    h1{
-                        color: #ffffff;
-                    }
-                }
-                .RDV_hours{
-                    font-weight: 600;
-                }
-
-            }
-            .RDV_right_cont{
-                margin: auto;
-                margin-right: 0;
-                margin-bottom: 0;
-                p{
-                    color: #000000;
-                }
-                .RDV_right_list{
-                    margin: auto;
-                    margin-bottom: 0;
-                    font-size: 3vw;
-                    flex-direction: column;
-                    li:nth-child(1){
-                        p{
-                            border-bottom: 0.5vw solid #0c0c0c;
-                        }
-                    }
-                    p{
-                        margin: auto;
-                        margin-right: 0;
-                    }
-                }
-            }
-        }
+    h2 {
+      margin: 0;
+      font-size: clamp(16px, 3.6vw, 20px);
+      color: var(--ink);
     }
 
-    
+    .month-meta {
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+    }
+  }
+
+  button {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    color: var(--ink);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+    &:hover {
+      background-color: var(--ink);
+      color: var(--bg);
+      border-color: var(--ink);
+    }
+  }
 }
-@media only screen and (max-width:375px){
-    .calendar{
-        .calendar-grid{
-            gap: 5vw;
-            .calendar-day{
-                width: 19vw;
-                height: 19vw;
-                flex: 0 1 19vw;
-            }
-        }
+
+.calendar-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tool-pill {
+  padding: 7px 12px;
+  background-color: var(--surface);
+  color: var(--ink-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+  &:hover,
+  &.is-active {
+    background-color: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+}
+
+.calendar-state {
+  text-align: center;
+  color: var(--ink-muted);
+  padding: 24px 8px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: 8px;
+}
+
+.calendar-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 10px 6px;
+  background-color: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+
+  &:hover {
+    border-color: var(--ink);
+  }
+
+  &.is-today {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+
+  &.hasRdv {
+    border-color: var(--success);
+    background-color: rgba(62, 142, 92, 0.14);
+  }
+
+  .day-name {
+    font-family: var(--font-display);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  .day-number {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.1;
+  }
+
+  .appointments-count {
+    font-family: var(--font-display);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    padding: 2px 6px;
+    border-radius: var(--radius);
+
+    &.has-count {
+      background-color: var(--success);
+      color: var(--ink);
+      font-weight: 600;
     }
+  }
+}
+
+/* Liste du jour sélectionné */
+.appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.appointments-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+
+  h3 {
+    margin: 0;
+    font-size: clamp(14px, 3.2vw, 17px);
+    text-align: center;
+  }
+
+  .day-total {
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    padding: 4px 8px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: var(--radius);
+    white-space: nowrap;
+  }
+}
+
+.back-cal-btn {
+  padding: 7px 12px;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--ink);
+  }
+}
+
+.RDV_list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.rdvUnit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background-color: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+
+  &.has-passed {
+    opacity: 0.55;
+  }
+}
+
+.rdv-time-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+
+  .rdv-hour {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    padding: 5px 9px;
+    background-color: var(--ink);
+    color: var(--bg);
+    border-radius: var(--radius);
+  }
+
+  .rdv-scissor {
+    font-family: var(--font-display);
+    font-size: 11px;
+    color: var(--accent);
+  }
+}
+
+.RDV_avatar {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  overflow: hidden;
+  flex: none;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.rdv_infos_container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+
+  .rdv-client-name {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .rdv-type {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+  }
+
+  .rdv-phone {
+    font-size: 12px;
+    color: var(--accent);
+    margin-top: 2px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.rdv-actions-col {
+  flex: none;
+}
+
+.status-passed {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.delete-rdv-btn {
+  padding: 6px 10px;
+  background: transparent;
+  color: #e58276;
+  border: 1px solid rgba(196, 69, 54, 0.5);
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background-color: var(--danger);
+    border-color: var(--danger);
+    color: var(--ink);
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  .rdvUnit {
+    flex-wrap: wrap;
+  }
+
+  .rdv-actions-col {
+    margin-left: auto;
+  }
 }

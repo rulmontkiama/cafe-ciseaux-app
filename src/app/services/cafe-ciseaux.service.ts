@@ -10,17 +10,17 @@ export class cafeCiseauxService {
         {
             id: 1,
             title: 'Le salon',
-            description: 'BIENVENUE CHEZ CAFÉ CISEAUX !',
-            text: 'Fitim vous accueil à son salon situé au centre de malmedy, dans une ambiance décontractée & chaleureuse vous pourrez vous arrêter pour y déguster une séléction de  bières spéciales ou simplement partager un café',
+            description: 'BIENVENUE CHEZ CAFÉ CISEAUX.',
+            text: 'Fitim vous accueille dans son salon situé au centre de Malmedy. Dans une ambiance décontractée et chaleureuse, vous pourrez vous arrêter pour y déguster une sélection de bières spéciales ou simplement partager un café.',
             imageUrl: 'assets/STORE.jpg',
           }
     ]
     barDetails: cafeCiseau[] = [
         {
           id:2,
-          title: 'le bar',
-          description: 'UN MOMENT DE CONVIVIALITÉ',
-          text: 'Afin de vous faire patienter nous vous invitons à vous détendre dans notre côté bar, vous aurez l’occassion d’y découvrir une minutieuse  séléction de bières spéciales',
+          title: 'Le bar',
+          description: 'UN MOMENT DE CONVIVIALITÉ.',
+          text: 'Afin de vous faire patienter, nous vous invitons à vous détendre dans notre espace bar. Vous aurez l’occasion d’y découvrir une minutieuse sélection de bières spéciales.',
           imageUrl: 'assets/SALON.jpg',
         }
   ]

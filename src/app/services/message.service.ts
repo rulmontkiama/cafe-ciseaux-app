@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { Observable, combineLatest, forkJoin, map, of, switchMap } from 'rxjs';
+import { Observable, combineLatest, firstValueFrom, forkJoin, map, of, switchMap } from 'rxjs';
 import { Message } from '../models/message.model';
 import { Chat } from '../models/chat.model';
 import { UsersService } from './users.service';
@@ -33,28 +33,33 @@ export class MessageService {
       map(messages => messages.length)
     );
   }
+  private toMs(d: any): number {
+    if (!d) return 0;
+    if (typeof d.toMillis === 'function') return d.toMillis();
+    if (typeof d.seconds === 'number') return d.seconds * 1000;
+    if (d instanceof Date) return d.getTime();
+    return Number(d) || 0;
+  }
+
   getChatMsg(userDetails: any): Observable<Chat[]> {
     const userId = userDetails.uid;
-  
+
+    // Requêtes par égalité simple (aucun index composite requis) + comparaison fiable en ms
     const sentMessages$ = this.db.collection("messages", ref =>
-      ref.where("from_id", "==", userId).orderBy("date", "desc")
+      ref.where("from_id", "==", userId)
     ).snapshotChanges();
-  
+
     const receivedMessages$ = this.db.collection("messages", ref =>
-      ref.where("to_id", "==", userId).orderBy("date", "desc")
+      ref.where("to_id", "==", userId)
     ).snapshotChanges();
-    // On utilise la fonction combineLatest() de RxJS pour combiner les Observables de sentMessages et receivedMessages.
-  // Une fois que les deux Observables sont terminés, on traite les messages reçus et envoyés en même temps.
-  // En utilisant la fonction switchMap(), on peut retourner un nouvel Observable qui contiendra les données que nous souhaitons renvoyer.
-  
+
     return combineLatest([sentMessages$, receivedMessages$]).pipe(
       switchMap(([sentMessages, receivedMessages]) => {
-        const lastMessages: any = {};  
-        // Process sent messages
+        const lastMessages: Record<string, any> = {};
         sentMessages.forEach(message => {
           const msgData: any = message.payload.doc.data();
-          const otherUserId: any = msgData.to_id;  
-          if (!lastMessages[otherUserId] || lastMessages[otherUserId].date < msgData.date) {
+          const otherUserId: string = msgData.to_id;
+          if (!lastMessages[otherUserId] || this.toMs(lastMessages[otherUserId].date) < this.toMs(msgData.date)) {
             lastMessages[otherUserId] = {
               msg: msgData.msg,
               date: msgData.date,
@@ -63,109 +68,111 @@ export class MessageService {
               is_read: msgData.is_read,
             };
           }
-        });  
-        // Process received messages
+        });
         receivedMessages.forEach(message => {
           const msgData: any = message.payload.doc.data();
-          const otherUserId: any = msgData.from_id;  
-          // Si le message est plus récent que le dernier message stocké de cette conversation, on le met à jour dans l'objet lastMessages.
-          if (!lastMessages[otherUserId] || lastMessages[otherUserId].date < msgData.date) {
+          const otherUserId: string = msgData.from_id;
+          if (!lastMessages[otherUserId] || this.toMs(lastMessages[otherUserId].date) < this.toMs(msgData.date)) {
             lastMessages[otherUserId] = {
               msg: msgData.msg,
               date: msgData.date,
               from_id: msgData.from_id,
               to_id: msgData.to_id,
               is_read: msgData.is_read,
-              hours:''
+              hours: ''
             };
           }
-        });  
-        const otherUserIds = Object.keys(lastMessages);  
+        });
+        const otherUserIds = Object.keys(lastMessages);
         const users$ = otherUserIds.length > 0 ?
           forkJoin(otherUserIds.map(id => this.usersService.getSender(id))) :
-          of([]);  
-          return users$.pipe(
-            map(users => {
-              return Object.values(lastMessages).map((msgData: any) => {
-                const isMe = msgData.from_id === userId;
-                const otherUserId:any = isMe ? msgData.to_id : msgData.from_id;
-                const otherUser:any = users.find((user:any) => user && user[0] && user[0].uid === otherUserId);
-                if (!otherUser) { return null; }
-                return {
-                  msg:msgData.msg,
-                  date:msgData.date,
-                  prenom: otherUser[0].prenom,
-                  nom: otherUser[0].nom,
-                  avatar: otherUser[0].avatar,
-                  uid: otherUser[0].uid,                 
-                  is_read:msgData.is_read,
-                  from_id:msgData.from_id,
-                  hours:''
-                };
-              }).filter((chat: any) => chat !== null) as Chat[];
-            })
-          );
+          of([]);
+        return users$.pipe(
+          map(users => {
+            return Object.values(lastMessages).map((msgData: any) => {
+              const isMe = msgData.from_id === userId;
+              const otherUserId: any = isMe ? msgData.to_id : msgData.from_id;
+              const otherUser: any = users.find((user: any) => user && user[0] && user[0].uid === otherUserId);
+              if (!otherUser) { return null; }
+              return {
+                msg: msgData.msg,
+                date: msgData.date,
+                prenom: otherUser[0].prenom,
+                nom: otherUser[0].nom,
+                avatar: otherUser[0].avatar,
+                uid: otherUser[0].uid,
+                is_read: msgData.is_read,
+                from_id: msgData.from_id,
+                hours: ''
+              };
+            }).filter((chat: any) => chat !== null) as Chat[];
+          })
+        );
       })
     );
   }
+
   async getConversation(otherUserId: any, userDetails: any): Promise<Observable<Chat[]>> {
     const userId = this.authService.getUserInfos().uid;
+    // Requêtes par égalités uniquement (fusion d'index automatiques Firestore, aucun index composite requis)
     const conversationRef = this.db.collection("messages", ref =>
-    ref.where("from_id", "==", userId)
-    .where("to_id", "==", otherUserId)
-    .orderBy("date", "asc")
-    .limit(10)
+      ref.where("from_id", "==", userId)
+        .where("to_id", "==", otherUserId)
     ).snapshotChanges();
 
     const receivedMessagesRef = this.db.collection("messages", ref =>
-        ref.where("from_id", "==", otherUserId)
+      ref.where("from_id", "==", otherUserId)
         .where("to_id", "==", userId)
-        .orderBy("date", "asc")
-        .limit(10)
     ).snapshotChanges();
-
-    const conversationRef$ = combineLatest([conversationRef, receivedMessagesRef]).pipe(
-        map(([sentMessages, receivedMessages]) => {
-            let messages:any = [...sentMessages, ...receivedMessages].sort((a:any, b:any) => a.payload.doc.data().date - b.payload.doc.data().date);
-            messages = messages.map((message:any) => {
-                const msgData = message.payload.doc.data();
-                return {
-                    msg: msgData.msg,
-                    date: msgData.date,
-                    prenom: msgData.from_id === userId ? userDetails.prenom : otherUser[0]?.prenom,
-                    nom: msgData.from_id === userId ? userDetails.nom : otherUser[0]?.nom,
-                    avatar: msgData.from_id === userId ? userDetails.avatar : otherUser[0]?.avatar,
-                    uid: msgData.from_id === userId ? userId : otherUserId,
-                    is_read: msgData.is_read,
-                    hours:''
-                };
-            });
-            return messages;
-        })
-    );
 
     const otherUser: any = await this.usersService.getSender(otherUserId);
 
+    const conversationRef$ = combineLatest([conversationRef, receivedMessagesRef]).pipe(
+      map(([sentMessages, receivedMessages]) => {
+        const merged = [...sentMessages, ...receivedMessages]
+          .sort((a: any, b: any) => this.toMs(a.payload.doc.data()?.date) - this.toMs(b.payload.doc.data()?.date))
+          .slice(-100);
+        return merged.map((message: any) => {
+          const msgData = message.payload.doc.data();
+          return {
+            msg: msgData.msg,
+            date: msgData.date,
+            prenom: msgData.from_id === userId ? userDetails.prenom : otherUser?.[0]?.prenom,
+            nom: msgData.from_id === userId ? userDetails.nom : otherUser?.[0]?.nom,
+            avatar: msgData.from_id === userId ? userDetails.avatar : otherUser?.[0]?.avatar,
+            uid: msgData.from_id === userId ? userId : otherUserId,
+            is_read: msgData.is_read,
+            hours: '',
+            from_id: msgData.from_id
+          };
+        });
+      })
+    );
+
     return conversationRef$;
-}
-// update is read messages
-async updateIsRead(otherUserId: any, userDetails: any) {
-  const senderId = otherUserId;
-  const recipientId = userDetails.uid;
-  const messages:any = await this.db.collection("messages", ref => {
-    return ref.where("from_id", "==", senderId)
-              .where("to_id", "==", recipientId)
-              .where("is_read", "==", false);
-  }).get().toPromise();
-  
-  const batch = this.db.firestore.batch();
-  messages.forEach((messageDoc:any) => {
-    const messageRef = messageDoc.ref;
-    batch.update(messageRef, { is_read: true });
-  });
-  
-  await batch.commit();
-}
+  }
+
+  // Marque les messages reçus comme lus
+  async updateIsRead(otherUserId: any, userDetails: any): Promise<void> {
+    if (!otherUserId || !userDetails?.uid) return;
+    const senderId = otherUserId;
+    const recipientId = userDetails.uid;
+    const messages: any = await firstValueFrom(
+      this.db.collection("messages", ref =>
+        ref.where("from_id", "==", senderId)
+          .where("to_id", "==", recipientId)
+          .where("is_read", "==", false)
+      ).get()
+    );
+
+    if (!messages || messages.empty) return;
+
+    const batch = this.db.firestore.batch();
+    messages.forEach((messageDoc: any) => {
+      batch.update(messageDoc.ref, { is_read: true });
+    });
+    await batch.commit();
+  }
 
 
 

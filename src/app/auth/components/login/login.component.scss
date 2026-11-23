@@ -1,57 +1,107 @@
-.login_block{
-    .demo_login{
-        color: deepskyblue;
-        display: flex;
-        padding-top: 4vw;
-        p{
-            margin: auto;
-        }
-    }
-    .login_form{
-        display: flex;
-        flex-direction: column;
-    }
+.login_block {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 44px) 20px calc(var(--bottom-nav-height) + 64px + env(safe-area-inset-bottom, 0px));
+
+  .logo {
+    width: clamp(160px, 44vw, 220px);
+    height: auto;
+    margin: 0 auto clamp(24px, 5vw, 36px);
+    display: block;
+  }
+
+  .cut_angle {
+    margin-bottom: 18px;
+  }
+
+  .login_form {
     display: flex;
     flex-direction: column;
-    width: 67vw;
-    margin: auto;
-    margin-top: 11vh;
+    width: 100%;
+  }
+
+  .demo_login {
+    color: var(--accent);
+    display: flex;
+    padding-top: 12px;
+    cursor: pointer;
+
+    p {
+      margin: auto;
+      font-family: var(--font-display);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+
+  .no_account {
+    display: flex;
     flex-direction: column;
-    .logo{
-        width: 44vw;
-        margin: auto;
-        margin-bottom: 8vw;
-    }
-       
-    .no_account{
-        display: flex;
-        flex-direction: column;
-        padding-top: 7vw;
-    }
-    button,.no_account span{
-        font-family: "alienleaguecond.ttf";
-        transition: background-color 0.35s ease;
-        cursor: pointer;
-        padding: 3vw 7vw;
-        margin: auto;  
-        border-color: white;
-        border-style: solid;
-        border-radius: 2vw;  
-    }
-    .connect{
-        margin:auto;
-    }
-    button{
-        background-color: #0c0c0c;
-        color: white;  
-    }.no_account p{
-        padding-bottom: 4vw;
-        margin: auto;
-        color: white;
-    }
-    .no_account span{
-        background-color:white;
-        color: #0c0c0c;   
+    align-items: center;
+    padding-top: 32px;
+    margin-top: 28px;
+    border-top: 1px solid var(--border-subtle);
+
+    p {
+      padding-bottom: 14px;
+      margin: 0;
+      font-size: 14px;
+      color: var(--ink-muted);
     }
 
+    span {
+      background-color: transparent;
+      color: var(--ink);
+      width: 100%;
+      text-align: center;
+
+      &:hover {
+        background-color: var(--ink);
+        color: var(--bg);
+      }
+
+      a {
+        display: block;
+        width: 100%;
+        color: inherit;
+      }
+    }
+  }
+
+  button,
+  .no_account span {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+    padding: 13px 24px;
+    margin: 0 auto;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+  }
+
+  .connect {
+    width: 100%;
+    margin-top: 8px;
+    background-color: var(--ink);
+    color: var(--bg);
+
+    &:hover {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+  }
 }

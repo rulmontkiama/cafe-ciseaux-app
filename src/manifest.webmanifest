@@ -1,0 +1,20 @@
+{
+  "name": "Café Ciseaux.",
+  "short_name": "Café Ciseaux",
+  "description": "Barbier & bar à bières spéciales à Malmedy — Prenez rendez-vous en ligne.",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0c0c0c",
+  "theme_color": "#0c0c0c",
+  "icons": [
+    {
+      "src": "assets/app-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

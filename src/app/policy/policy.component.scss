@@ -1,7 +1,10 @@
-.policy_rules{
-    color: white;
-    padding: 2vw;
-    p{
-        margin: 0;
-    }
+.policy_rules {
+  color: var(--ink-muted);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 24px 16px;
+
+  p {
+    margin: 0 0 12px;
+  }
 }

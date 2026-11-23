@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs';
 import { AuthenticationService } from 'src/app/services/authentication.service';
 import { UsersService } from '../services/users.service';
 import { MessageService } from '../services/message.service';
+import { AdminService } from '../services/admin.service';
 @Component({
   selector: 'app-header',
   templateUrl: './header.component.html',
@@ -15,7 +16,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   public scissor!:number;
   public messages!:string;
   public msgCount!:number;
-  public notifCount!:number;
   public nom!:string;
   public prenom!:string;
   private uid!:string;
@@ -24,10 +24,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthenticationService,
     private user_service:UsersService,
-    private msgService:MessageService
-    
+    private msgService:MessageService,
+    private adminService: AdminService
     ) { 
-      this.notifCount = 0
       this.msgCount = 0
       this.scissor = 0
   }
@@ -40,10 +39,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.liveSub?.unsubscribe();
       this.isUserLoggedIn = !!user;
       if (!user) {
+        this.uid = '';
         this.msgCount = 0;
         this.scissor = 0;
         return;
       }
+      this.uid = user.uid;
+      // Rafraîchit la liste des admins à chaque session pour afficher le bouton Admin immédiatement
+      this.adminService.getAdmin().then((admins) => this.authService.setAdminIds(admins)).catch(() => {});
       this.liveSub = new Subscription();
       this.liveSub.add(this.user_service.userObserve(user.uid).subscribe((users) => {
         const profile = users && users[users.length - 1];

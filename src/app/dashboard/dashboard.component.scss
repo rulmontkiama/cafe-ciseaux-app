@@ -1,49 +1,63 @@
-.admin_dashboard{
-    display: flex;
-    flex-direction: row;
-    margin: auto;
-    .admin_interface{
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-    }
-    .avatar{
-        position: relative;
-        display: none;
-        width: 23vw;
-        border: 0.5vw solid white;
-        height: 23vw;
-        overflow: hidden;
-    }
-    .profile_user_pictures{
-        width: -webkit-fill-available;
-        margin: auto;
-    }
-    .name_row{
-        display: none;
-        flex-direction: row;
-        background-color: white;
-        margin-left: 3vw;
-        h2{
-            color:#0c0c0c;
-        }
-        h2:nth-child(1){
-            padding-right: 2vw;
-        }    
-        
-    }
-    .nav_admin{
-        margin-left: 3vw;
-        display: flex;
-        a{
-            color: white;
-        }
-        img{
-            height: 4vw;
-            padding-right: 3vw;
-
-        }
-        
-    }
+.admin_dashboard {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 8px;
 }
 
+.nav_admin {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(76px, 1fr));
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.admin-tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px 8px;
+  color: var(--ink);
+  opacity: 0.55;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &.is-active {
+    opacity: 1;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 16%;
+      right: 16%;
+      height: 2px;
+      background-color: var(--accent);
+    }
+  }
+
+  img {
+    height: 19px;
+    width: auto;
+    display: block;
+  }
+
+  span {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+}

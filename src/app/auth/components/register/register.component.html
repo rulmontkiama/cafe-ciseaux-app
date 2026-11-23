@@ -1,8 +1,8 @@
 <div class = 'row m-0 w-100 register_container'>
     <div class = 'col-md-4 offset-4 mt-5 register_block' *ngIf = '!this.isLogin'>
-        <img class="logo" src="assets/LOGO_CC_WHITE.svg" alt="cafe_ciseaux_logo" >
+        <img class="logo" src="assets/LOGO_CC_WHITE.svg" alt="Café Ciseaux" >
         <span class="cut_angle">
-            <h2>REGISTER</h2>
+            <h2>INSCRIPTION</h2>
         </span>
         <form [formGroup]="registerForm" (ngSubmit) = "onSubmit()" class="register_form">
             
@@ -13,39 +13,45 @@
                 </span>             
             </span> 
             <div class = 'form-group block_cyber'>
-                <label for="nom">NOM :</label>
-                <input class = 'form-control input_cyber' type = "text" name = "nom" placeholder = "nom" formControlName="nom">
+                <label for="register-nom">NOM</label>
+                <input id="register-nom" class = 'form-control input_cyber' type = "text" name = "nom" placeholder = "Votre nom" formControlName="nom" autocomplete="family-name">
             </div>
 
             <!-- PRENOM -->
             <span class="form_error">
                 <span *ngIf="submitted && registerForm.get('prenom')?.errors?.['required']">
-                    <p>Veuillez entrer votre prenom</p>  
+                    <p>Veuillez entrer votre prénom</p>  
                 </span>             
             </span> 
             <div class = 'form-group block_cyber'>
-                <label for="prenom">PRÉNOM :</label>
-                <input class = 'form-control input_cyber' type = "text" name = "prenom" placeholder = "prenom" formControlName="prenom">
+                <label for="register-prenom">PRÉNOM</label>
+                <input id="register-prenom" class = 'form-control input_cyber' type = "text" name = "prenom" placeholder = "Votre prénom" formControlName="prenom" autocomplete="given-name">
             </div>
 
             <!-- EMAIL -->
             <span class="form_error">
                 <span *ngIf="submitted && registerForm.get('email')?.errors?.['required']">
-                    <p>Veuillez entrer un E-mail</p>  
+                    <p>Veuillez entrer un e-mail</p>  
                 </span>
                 <span *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.errors?.['invalidEmail']">
-                    <p>Veuillez entrer un E-mail valide</p>  
+                    <p>Veuillez entrer un e-mail valide</p>  
                 </span>             
             </span>
             <div class = 'form-group block_cyber'>
-                <label for="email">EMAIL :</label>
-                <input class = 'form-control input_cyber' type = "email" name = "email" placeholder = "Email" formControlName="email">
+                <label for="register-email">E-MAIL</label>
+                <input id="register-email" class = 'form-control input_cyber' type = "email" name = "email" placeholder = "votre@email.com" formControlName="email" autocomplete="email">
+            </div>
+
+            <!-- TÉLÉPHONE -->
+            <div class = 'form-group block_cyber'>
+                <label for="register-phone">TÉLÉPHONE (POUR LES RAPPELS / IMPRÉVUS)</label>
+                <input id="register-phone" class = 'form-control input_cyber' type = "tel" name = "phone" placeholder = "04XX XX XX XX" formControlName="phone" autocomplete="tel">
             </div>
 
             <!-- DATE DE NAISSANCE -->
             <div class = 'form-group block_cyber'>
-                <label for="birthdate">DATE DE NAISSANCE :</label>
-                <input class = 'form-control input_cyber' type = "date" name = "birthdate" placeholder = "birthdate" formControlName="birthdate">
+                <label for="register-birthdate">DATE DE NAISSANCE</label>
+                <input id="register-birthdate" class = 'form-control input_cyber' type = "date" name = "birthdate" formControlName="birthdate" autocomplete="bday">
             </div>
 
             <!-- PASSWORD -->
@@ -62,8 +68,8 @@
                 </span>         
             </span>
             <div class = 'form-group block_cyber'>
-                <label for="password">MOT DE PASSE:</label>
-                <input class = 'form-control input_cyber' type = "password" name = "password" placeholder = "Password" formControlName="password">
+                <label for="register-password">MOT DE PASSE</label>
+                <input id="register-password" class = 'form-control input_cyber' type = "password" name = "password" placeholder = "••••••••" formControlName="password" autocomplete="new-password">
             </div>
 
             <!-- CONFIRM PASSWORD -->
@@ -76,11 +82,11 @@
                 </span>         
             </span>           
             <div class = 'form-group block_cyber'>
-                <label for="confirmPassword">CONFIRMER LE MOT DE PASSE:</label>
-                <input class = 'form-control input_cyber' type = "password" name = "confirmPassword" placeholder = "Password" formControlName="confirmPassword">
+                <label for="register-confirm-password">CONFIRMER LE MOT DE PASSE</label>
+                <input id="register-confirm-password" class = 'form-control input_cyber' type = "password" name = "confirmPassword" placeholder = "••••••••" formControlName="confirmPassword" autocomplete="new-password">
             </div>
 
-            <input class= 'btn btn-outline-info register_bttn' type = "submit" value = "Register">
+            <input class= 'btn btn-outline-info register_bttn' type = "submit" value = "S'INSCRIRE">
             
             <div class="forget_password" [routerLink] = "['/reset-password']">
                 <p>mot de passe oublié ?</p>
@@ -89,18 +95,18 @@
 
         <div class="social_login">
             <p class="social_or">ou</p>
-            <button type="button" class="social_btn google" (click)="socialLogin('google')">
+            <button type="button" class="social_btn apple" [disabled]="socialLoading" (click)="appleLogin()">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.19 0 3.26 2.854 4.42 2.955 4.45z"/></svg>
+                <span>CONTINUER AVEC APPLE</span>
+            </button>
+            <button type="button" class="social_btn google" [disabled]="socialLoading" (click)="googleLogin()">
                 <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
                 <span>CONTINUER AVEC GOOGLE</span>
-            </button>
-            <button type="button" class="social_btn apple" (click)="socialLogin('apple')">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
-                <span>CONTINUER AVEC APPLE</span>
             </button>
         </div>
     </div>
     
     <div class = 'col-md-4 offset-4 mt-5' *ngIf = 'this.isLogin'>
-        <h5>You are logged in</h5>
+        <h5>Vous êtes connecté</h5>
     </div>
 </div>

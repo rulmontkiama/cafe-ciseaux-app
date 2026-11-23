@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore, QueryDocumentSnapshot } from '@angular/fire/compat/firestore';
-import { Users, UsersWithRdvCount,UsersWithRdvSnap }  from '../models/users';
-import {   first,  firstValueFrom,  map, Observable, of,} from 'rxjs';
+import { Users, UsersWithRdvSnap } from '../models/users';
+import { first, firstValueFrom, from, map, Observable, of } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
@@ -22,36 +22,43 @@ export class UsersService {
     );
   }
   searchUsers(term: string): Observable<Users[]> {
-    if (!term.trim()) {
-      // Si aucun terme n'est fourni, retourne un Observable vide
+    const cleaned = (term || '').trim();
+    if (!cleaned) {
       return of([]);
     }
-  
-    // Recherche parmi plusieurs champs (nom, prénom, email, uid) avec une limitation de 20 résultats
-    return this.db.collection<Users>('users', ref => 
-      ref
-        .orderBy('nom') // Tri selon un champ (tu peux ajuster cela selon tes besoins)
-        .limit(20)       // Limite à 20 résultats
-        .where('nom', '>=', term)  // Rechercher les utilisateurs dont le nom est supérieur ou égal au terme de recherche
-    ).snapshotChanges().pipe(
-      map(users =>
-        users
-          .map(a => {
-            let newItem = a.payload.doc.data();
-            newItem.uid = a.payload.doc.id; // Assigner l'ID du document
-            return newItem as Users;
-          })
-          .filter(user => {
-            // Filtrer par les champs pertinents
-            const searchTerm = term.toLowerCase();
-            return (
-              user.nom?.toLowerCase().includes(searchTerm) ||
-              user.prenom?.toLowerCase().includes(searchTerm) ||
-              user.email?.toLowerCase().includes(searchTerm) ||
-              user.uid?.toLowerCase().includes(searchTerm)
-            );
-          })
-      )
+    const lower = cleaned.toLowerCase();
+    const limitPerField = 20;
+
+    const runPrefixQuery = (field: string, value: string) =>
+      firstValueFrom(
+        this.db.collection<Users>('users', ref =>
+          ref.orderBy(field).where(field, '>=', value).where(field, '<=', value + '\uf8ff').limit(limitPerField)
+        ).get()
+      ).catch(() => null);
+
+    const queries = [
+      runPrefixQuery('nom', lower),
+      runPrefixQuery('prenom', lower),
+      runPrefixQuery('email', lower)
+    ];
+
+    if (/^[+0-9]/.test(cleaned)) {
+      queries.push(runPrefixQuery('phone', cleaned));
+    }
+
+    return from(Promise.all(queries)).pipe(
+      map((snapshots) => {
+        const unique = new Map<string, Users>();
+        for (const snap of snapshots) {
+          if (!snap) continue;
+          snap.docs.forEach((doc) => {
+            const data = doc.data() as Users;
+            const uid = data.uid || doc.id;
+            unique.set(uid, { ...data, uid });
+          });
+        }
+        return Array.from(unique.values()).slice(0, 30);
+      })
     );
   }
   
@@ -74,29 +81,26 @@ export class UsersService {
       );
   }
   getUsersLazy(startAfter?: any, limit: number = 20): Observable<UsersWithRdvSnap[]> {
+    // Lecture ponctuelle .get() pour toujours charger la liste complète depuis Firestore
+    // (snapshotChanges + take(1) pouvait ne renvoyer que l'admin déjà présent dans le cache local)
     return this.db.collection<UsersWithRdvSnap>('users', ref => {
       let query = ref.orderBy('nom').limit(limit);
-      
-      if (startAfter) {
-        
-        // Utilisation de startAfter avec le dernier DocumentSnapshot
+      if (startAfter?.documentSnapshot) {
         query = query.startAfter(startAfter.documentSnapshot);
       }
-  
       return query;
-    }).snapshotChanges().pipe(
-      map(users => {
-        return users.map(a => {
-          const newItem = a.payload.doc.data();
-          newItem.uid = a.payload.doc.id;
-          const userWithRdvCount: UsersWithRdvSnap = {
-            ...newItem as Users,
-            rdvCount: 0, // Tu peux calculer ou récupérer rdvCount ici si nécessaire
-            documentSnapshot: a.payload.doc // Ajoute le DocumentSnapshot complet
-          };
-          return userWithRdvCount;
-        });
-      })
+    }).get().pipe(
+      map(snapshot =>
+        snapshot.docs.map(doc => {
+          const newItem = doc.data() as Users;
+          return {
+            ...newItem,
+            uid: newItem.uid || doc.id,
+            rdvCount: 0,
+            documentSnapshot: doc
+          } as UsersWithRdvSnap;
+        })
+      )
     );
   }
   

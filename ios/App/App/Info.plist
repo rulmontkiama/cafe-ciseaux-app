@@ -3,15 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Votre application a besoin d&apos;accéder à la caméra pour prendre une photo de profil si vous le souhaiter, cette photo restera privée.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>Votre application a besoin d&apos;accéder à votre librairie pour prendre une photo de profil si vous le souhaiter, cette photo restera privée</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Votre application a besoin d'accéder au microphone pour enregistrer de l'audio lors de l'utilisation de la fonctionnalité de l'appareil photo pour télécharger une photo de profil.</string>
+	<string>Café Ciseaux utilise l&apos;appareil photo uniquement si vous souhaitez ajouter une photo de profil.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Café Ciseaux accède à votre photothèque uniquement si vous souhaitez choisir une photo de profil.</string>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>fr</string>
 	<key>CFBundleDisplayName</key>
-	<string>cafe-ciseaux</string>
+	<string>Café Ciseaux</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -19,19 +17,51 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<string>Café Ciseaux</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.406207272951-82r9t5tc7gmr1medvt2houu7b39o99fr</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>

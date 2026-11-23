@@ -22,9 +22,8 @@ export class BeersService {
       }))
     );
   }
-  addBeer(beer: Beer): void {
-    // Utilisez les détails de la bière passés pour ajouter la bière à la base de données
-    this.db.collection('beer-selection').add({
+  addBeer(beer: Beer): Promise<any> {
+    return this.db.collection('beer-selection').add({
       description: beer.description,
       nom: beer.name,
       imageUrl: beer.imageUrl

@@ -1,123 +1,504 @@
-.admin_schedule_container{
-    border-bottom: 0.5vw solid white;
-    padding-bottom: 4vw;
-    margin-top: 4vw;
-    #enable_days_RDV{
-        color: white;
-        .reserved{
-            .reservationBttn{
-                background-color: #45ff45;
-            }
-        }
-        .not-reserved{
-            .reservationBttn{
-                background-color: red;
-            }
-        }
-        .reservationBttn{
-            display: flex;
-            border: solid #ffffff 0.2vw;
-            width: 34vw;
-            border-radius: 2vw;
-            p{
-                margin: auto;
-                margin-top: 3vw;
-                margin-bottom: 3vw;
-            }
-        }
-    }
-    h1{
-        border-bottom: 0.5vw solid white;
-        color: white;
-    }
-.open_hours{
-    padding-top: 6vw;
+.admin_schedule_container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
-.blocked_day{
-    background-color: red;
+
+.admin-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--ink-muted);
+  }
 }
-.block_day_unit{
-    font-size: 5vw;
-    border-bottom: solid;
+
+.schedule-state,
+.schedule-empty {
+  color: var(--ink-muted);
+  font-size: 14px;
+  margin: 8px 0;
+}
+
+.schedule-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  background-color: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+.card-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &.card-heading-row {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 14px;
+    letter-spacing: 0.14em;
+    color: var(--ink);
+  }
+
+  .heading-hint {
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+}
+
+.ghost-action-btn {
+  padding: 7px 12px;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  flex: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    border-color: var(--ink);
+    background-color: var(--ink);
+    color: var(--bg);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* Jours réservables */
+.enable_days_list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.day-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background-color: var(--bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+
+  .day-label {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--ink);
+  }
+
+  .toggle-pill {
+    padding: 7px 14px;
+    border-radius: var(--radius);
+    border: 1px solid rgba(196, 69, 54, 0.55);
+    background-color: rgba(196, 69, 54, 0.16);
+    color: #e58276;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+
+    &.is-open {
+      background-color: var(--success);
+      border-color: var(--success);
+      color: var(--ink);
+    }
+  }
+}
+
+/* Congés & Jours bloqués */
+.empty-init {
+  align-items: flex-start;
+
+  h3 {
+    margin: 0;
+    color: var(--accent);
+  }
+
+  p {
+    margin: 0;
+    color: var(--ink-muted);
+    font-size: 14px;
+  }
+}
+
+.leave-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.leave-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+
+  label {
     display: flex;
-    margin-bottom: 4vw;
-    .block_day_cont{
-        display: flex;
-        width: -webkit-fill-available;
-        .block_day_text{
-            display: flex;
-        }
-        .remove_block_day{
-            background-color: red;
-            padding-left: 2vw;
-            padding-right: 2vw;
-            padding-top: 1vw;
-            height: 4vw;
-            padding-bottom: 1vw;
-            display: flex;
-            margin: auto;
-            margin-right: 0;
-            margin-top: 2vw;
-            margin-bottom: 2vw;
-        }
-        p{margin: auto;}
-    }
-}
-.open_hours_list{
-    h3{
-        margin: 0;
-    }
-    .open_hours_unit{
-        padding-top: 2vw;
-    }
-    .hours_set_unit{
-        display: flex;
-        flex-direction: column;
-        .separate{
-            color: white;
-            padding-left: 1vw;
-            padding-right: 1vw;
-        }
-        img{
-            height: 3vw;
-            margin: auto;
-        }
-        .hours_set_unit_open,.hours_set_unit_closed{
-            display: flex;
-            margin-bottom: 7vw;
-            div{
-                padding-left: 1vw;
-                width:max-content;
-                padding-right: 1vw;
-                display: flex;
-            }
-        }
-    }
-    .hours_settings{
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        h4,h5{
-            color: white;
-        }
-        h4{
-            text-decoration: underline;
-            text-decoration-color: white;
-        }
-    }
-    input{
-        background-color: unset;
-        color: white;
-       
-    }    
-}
-}
-.border-solid-white-1 {
-    border: 0;
-    border-bottom: 0.3vw solid rgba(255, 255, 255, 1);
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
   }
-  
-  .border-solid-white-0-4 {
-    border: 0;
-    border-bottom: 0.3vw solid rgba(255, 255, 255, 0.2);
+
+  input[type='date'] {
+    width: 100%;
+    padding: 10px 12px;
+    background-color: var(--bg);
+    color: var(--ink);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    font-size: 14px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--ink);
+    }
   }
+}
+
+.leave-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  input[type='text'] {
+    flex: 1 1 200px;
+    padding: 10px 12px;
+    background-color: var(--bg);
+    color: var(--ink);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    font-size: 14px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--ink);
+    }
+  }
+}
+
+.block-add-btn {
+  padding: 10px 18px;
+  background-color: var(--ink);
+  color: var(--bg);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background-color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.blocked-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.blocked-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 12px;
+  background-color: var(--bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--ink);
+
+  .chip-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    strong {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .chip-label {
+      font-size: 11px;
+      color: var(--accent);
+    }
+  }
+
+  .chip-remove {
+    background: transparent;
+    border: 0;
+    color: #e58276;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 4px;
+    line-height: 1;
+
+    &:hover {
+      color: var(--ink);
+    }
+  }
+}
+
+/* Plages horaires */
+.open_hours_list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.open_hours_unit {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  background-color: var(--bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+
+  .day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    h3 {
+      font-size: 13px;
+    }
+  }
+
+  .copy-day-btn {
+    padding: 5px 10px;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid rgba(216, 207, 196, 0.35);
+    border-radius: var(--radius);
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+
+    &:hover:not(:disabled) {
+      border-color: var(--accent);
+      background-color: var(--accent);
+      color: var(--bg);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.half-days-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.half-day-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background-color: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+
+  &.is-closed {
+    opacity: 0.65;
+  }
+}
+
+.half-day-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  .half-day-title {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+  }
+
+  .mini-toggle {
+    padding: 4px 9px;
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    font-family: var(--font-display);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--ink);
+    }
+  }
+}
+
+.time-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 10px;
+  }
+
+  input[type='time'] {
+    width: 100%;
+    padding: 8px 6px;
+    background-color: var(--bg);
+    color: var(--ink);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+
+    &::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      opacity: 0.75;
+      cursor: pointer;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--ink);
+    }
+  }
+}
+
+.closed-note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-muted);
+}
+
+/* Éditeur prestations & tarifs */
+.prestations-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.prestation-edit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px 100px 36px;
+  align-items: end;
+  gap: 8px;
+  padding: 12px;
+  background-color: var(--bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 10px;
+    min-width: 0;
+  }
+
+  input {
+    width: 100%;
+    padding: 9px 10px;
+    background-color: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    font-size: 13px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--ink);
+    }
+  }
+
+  .row-remove-btn {
+    height: 36px;
+    width: 36px;
+    background: transparent;
+    border: 1px solid rgba(196, 69, 54, 0.45);
+    border-radius: var(--radius);
+    color: #e58276;
+    font-size: 14px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--danger);
+      border-color: var(--danger);
+      color: var(--ink);
+    }
+  }
+}
+
+.prestations-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media only screen and (max-width: 540px) {
+  .half-days-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .prestation-edit-row {
+    grid-template-columns: 1fr 1fr 36px;
+
+    .field-name {
+      grid-column: 1 / -1;
+    }
+  }
+}

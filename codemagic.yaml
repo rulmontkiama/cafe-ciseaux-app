@@ -1,0 +1,48 @@
+workflows:
+  ios-app-store:
+    name: Café Ciseaux — iOS App Store
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: be.cafeciseaux.app
+      vars:
+        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+        BUNDLE_ID: "be.cafeciseaux.app"
+      node: 20
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Installer les dépendances npm
+        script: |
+          npm install --legacy-peer-deps
+      - name: Compiler l'application Angular (production)
+        script: |
+          npx ng build --configuration production
+      - name: Synchroniser Capacitor iOS et CocoaPods
+        script: |
+          npx cap sync ios
+      - name: Mettre à jour le numéro de build iOS
+        script: |
+          BUILD_NUM="${PROJECT_BUILD_NUMBER:-1}"
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = ${BUILD_NUM};/g" ios/App/App.xcodeproj/project.pbxproj
+      - name: Appliquer les profils de signature Apple
+        script: |
+          xcode-project use-profiles --project ios/App/App.xcodeproj
+      - name: Archiver et exporter l'IPA signé
+        script: |
+          xcode-project build-ipa \
+            --workspace "$CM_BUILD_DIR/$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false

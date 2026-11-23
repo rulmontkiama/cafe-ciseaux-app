@@ -1,47 +1,65 @@
+<div class="chat-page">
+  <div class="chat-top-bar">
+    <a class="chat-back" [routerLink]="['/profile']">← Retour au profil</a>
+  </div>
 
-<div *ngIf=" adminUser" class="user_info_container" id="user_info_{{ adminUser.uid }}" >
-  <div class="user_info">
-    <div class="avatar_container">
-      <img  src="{{ adminUser.avatar }}">
-    </div>
-    <div class="name_container cut_angle">
-      <h3 class="name">{{ adminUser.nom | uppercase }} {{ adminUser.prenom | uppercase}}</h3>
-    </div>
-  </div>
-  <div class="conversation" *ngIf="conversation">
-    <ng-container *ngFor="let message of conversation" >
-      <div  class="message" [ngClass]="{'message_from_me': message.uid === userDetails.uid, 'message_from_other': message.uid !== userDetails.uid}" >
-        <div class="message_details">
-          <div class="user_details">
-            <h3 class="prenom">{{ message.prenom | uppercase}}</h3>
-          </div>
-          <div class="message_content">
-            <span class="message_text">
-              <p>
-                {{ message.msg }}
-              </p>
-        </span>
-          </div>
-          <div class="date_content">
-            <span class="date">{{ message.date  }}</span>
-            <span class="date">{{ message.hours }}</span>
-          </div>
-        </div>
+  <p *ngIf="isLoading" class="chat-state">Chargement de la conversation…</p>
+  <p *ngIf="!isLoading && noRecipient" class="chat-state">La messagerie du salon est momentanément indisponible.</p>
+
+  <div *ngIf="adminUser" class="user_info_container" id="user_info_{{ adminUser.uid }}">
+    <div class="user_info">
+      <div class="avatar_container">
+        <img [src]="adminUser.avatar || 'assets/AVATAR.svg'" alt="Salon Café Ciseaux">
       </div>
-    </ng-container>
-  </div>
-  <div class="send_msg_container">
-  <form class="send_msg_form" (ngSubmit)="onSendMessage()" class="send_msg_form">
-    <div class="message_container">
-      <textarea name="newMessage" [(ngModel)]="newMessage" type="text" placeholder="Écrire un message..."></textarea>
-      <div class="submit_container">
-        <div class="submit_container">
-          <button #submitButton id="submit-button" style="display:none"></button>
-          <div (click)="triggerSubmit()"><img src="assets/SEND.svg"></div>
-        </div>
+      <div class="name_container cut_angle">
+        <h3 class="name">{{ adminUser.nom | uppercase }} {{ adminUser.prenom | uppercase }}</h3>
       </div>
     </div>
-  </form>
-</div>
-</div>
 
+    <div class="conversation">
+      <p *ngIf="!isLoading && conversation.length === 0" class="chat-empty">
+        Une question sur une coupe ou un créneau ? Écrivez directement au salon.
+      </p>
+
+      <ng-container *ngFor="let message of conversation">
+        <div
+          class="message"
+          [ngClass]="{
+            'message_from_me': message.uid === userDetails.uid,
+            'message_from_other': message.uid !== userDetails.uid
+          }">
+          <div class="message_details">
+            <div class="user_details">
+              <h3 class="prenom">{{ message.prenom | uppercase }}</h3>
+            </div>
+            <div class="message_content">
+              <span class="message_text">
+                <p>{{ message.msg }}</p>
+              </span>
+            </div>
+            <div class="date_content">
+              <span class="date">{{ message.date }} · {{ message.hours }}</span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="send_msg_container">
+      <form class="send_msg_form" (ngSubmit)="onSendMessage()">
+        <div class="message_container">
+          <textarea
+            name="newMessage"
+            rows="2"
+            [(ngModel)]="newMessage"
+            (keydown)="onKeydown($event)"
+            placeholder="Écrire un message…">
+          </textarea>
+          <button #submitButton id="submit-button" type="submit" class="submit_container" aria-label="Envoyer le message">
+            <img src="assets/SEND.svg" alt="Envoyer">
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

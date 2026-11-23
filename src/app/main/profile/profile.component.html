@@ -1,61 +1,165 @@
 <div class="profile_container">
-    <div class="user_dashboard">
-        <div class="avatar" (click) = 'changeAvatar()'>
-            <img src="{{avatar }}"  (avatarChanged)="uploadChangedHandler($event)" class="profile_user_pictures" alt="profile_user_pictures">
-            <img src="assets/EDIT_PIC.svg" class="edit_pic">
+  <!-- EN-TÊTE CLIENT -->
+  <section class="user_dashboard">
+    <div class="avatar" [class.editable]="useStorage" (click)="changeAvatar()">
+      <img [src]="avatar" class="profile_user_pictures" alt="Photo de profil">
+      <img *ngIf="useStorage" src="assets/EDIT_PIC.svg" class="edit_pic" alt="Modifier la photo">
+    </div>
+    <app-file-upload
+      *ngIf="avatarBool && !uploadBool"
+      (uploadChanged)="uploadChangedHandler($event)"
+      (close)="avatarBool = false">
+    </app-file-upload>
+
+    <div class="userContainer">
+      <div class="name_row cut_angle">
+        <h2 *ngIf="prenom">{{ prenom | uppercase }}</h2>
+        <h2 *ngIf="nom">{{ nom | uppercase }}</h2>
+      </div>
+      <div class="profile-quick-actions">
+        <a *ngIf="isAdmin" [routerLink]="['/admin']" class="quick-cta">ESPACE ADMIN →</a>
+        <a [routerLink]="['/rendez-vous']" [class.quick-cta]="!isAdmin" [class.quick-link]="isAdmin">PRENDRE RDV</a>
+        <a [routerLink]="['/user-message']" class="quick-link">MESSAGES</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCHAIN RENDEZ-VOUS EN VEDETTE -->
+  <section class="next-rdv-section" *ngIf="!isLoadingRdv">
+    <div *ngIf="nextRdv as rdv" class="next-rdv-card">
+      <div class="next-rdv-top">
+        <span class="cut_angle">
+          <h2>PROCHAIN RDV.</h2>
+        </span>
+        <span class="countdown-badge">{{ rdv.countdownLabel }}</span>
+      </div>
+
+      <div class="next-rdv-body">
+        <div class="next-rdv-datetime">
+          <span class="next-rdv-time">{{ rdv.hours }}</span>
+          <span class="next-rdv-date">{{ rdv.dateLabel }}</span>
         </div>
-        <app-file-upload *ngIf = 'avatarBool && !this.uploadBool'  (uploadChanged)="uploadChangedHandler($event)" (close)="avatarBool = false"></app-file-upload>
-        <div class="userContainer">
-          <div class="name_row cut_angle">
-              <h2 *ngIf = 'this.nom' >{{nom | uppercase}}</h2>
-              <h2 *ngIf = 'this.prenom' >{{prenom | uppercase}}</h2>
-          </div>
-          <div (click) = 'logout()' class="userParams">
-            <img src="{{imageUrl}}/LOGOUT.svg">
-          </div>
+        <span class="next-rdv-type">{{ rdv.type | uppercase }}</span>
       </div>
-      
-    
-    </div>
-    <section id="accountParameters">
-      <h2>Paramètres du compte</h2>
-  
-      <!-- Changement de mot de passe -->
-      <div class="paramtersContainer">
-          <h3>Changer le mot de passe</h3>
-          <label for="oldPassword">Ancien mot de passe</label>
-          <input type="password" id="oldPassword" name="oldPassword" required>
-  
-          <label for="newPassword">Nouveau mot de passe</label>
-          <input type="password" id="newPassword" name="newPassword" required>
-  
-          <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
-          <input type="password" id="confirmPassword" name="confirmPassword" required>
-  
-          <button (click)="changePassword()">Changer le mot de passe</button>
+
+      <div class="next-rdv-actions">
+        <button type="button" class="action-btn" (click)="downloadIcs(rdv)">+ AGENDA</button>
+        <a class="action-btn" [href]="mapsUrl" target="_blank" rel="noopener noreferrer">ITINÉRAIRE ↗</a>
+        <button
+          type="button"
+          class="action-btn is-danger"
+          [disabled]="cancellingId === rdv.id"
+          (click)="cancelRdv(rdv)">
+          {{ cancellingId === rdv.id ? 'ANNULATION…' : 'ANNULER' }}
+        </button>
       </div>
-  
-      <!-- Suppression de compte -->
-
-  
-      <!-- Autres paramètres de compte (à ajouter selon vos besoins) -->
-      <!-- ... -->
-  
-    </section>
-    <div [routerLink] = "['/rendez-vous']" class="rdvBttn">
-      <p>PRENDRE RDV</p>
     </div>
-    <h2>SUIVI DE MES RENDEZ-VOUS</h2>
-    <app-calendar-view></app-calendar-view>
 
-
-
-    <div>
-      <h3>Supprimer le compte</h3>
-      <p>Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.</p>
-      <button (click)="deleteAccount()">Supprimer le compte</button>
-  </div>
-    <div class = 'col-md-4 offset-4 mt-5' >       
-        <button class = 'logout_block btn btn-outline-info bttn_cyber' (click) = 'logout()'>LOGOUT</button>      
+    <div *ngIf="!nextRdv" class="empty-next-rdv">
+      <p>Vous n'avez aucun rendez-vous à venir.</p>
+      <a [routerLink]="['/rendez-vous']" class="rdvBttn">PRENDRE RENDEZ-VOUS</a>
     </div>
+  </section>
+
+  <!-- HISTORIQUE & SUIVI PAR ONGLETS -->
+  <section class="appointments-section">
+    <div class="tabs-bar" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="activeTab === 'upcoming'"
+        class="tab-btn"
+        [class.is-active]="activeTab === 'upcoming'"
+        (click)="activeTab = 'upcoming'">
+        À VENIR ({{ upcomingRdv.length }})
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="activeTab === 'past'"
+        class="tab-btn"
+        [class.is-active]="activeTab === 'past'"
+        (click)="activeTab = 'past'">
+        PASSÉS ({{ pastRdv.length }})
+      </button>
+    </div>
+
+    <p *ngIf="isLoadingRdv" class="list-state">Chargement de vos rendez-vous…</p>
+
+    <ng-container *ngIf="!isLoadingRdv && activeTab === 'upcoming'">
+      <p *ngIf="upcomingRdv.length === 0" class="list-state">Aucun rendez-vous prévu pour le moment.</p>
+      <ul *ngIf="upcomingRdv.length > 0" class="rdv-cards-list">
+        <li *ngFor="let rdv of upcomingRdv" class="rdv-row">
+          <div class="rdv-row-main">
+            <span class="rdv-row-time">{{ rdv.hours }}</span>
+            <div class="rdv-row-meta">
+              <strong class="rdv-row-date">{{ rdv.dateLabel }}</strong>
+              <span class="rdv-row-type">{{ rdv.type | uppercase }}</span>
+            </div>
+          </div>
+          <div class="rdv-row-actions">
+            <button type="button" class="mini-btn" (click)="downloadIcs(rdv)" title="Ajouter à mon agenda">.ICS</button>
+            <button
+              type="button"
+              class="mini-btn is-danger"
+              [disabled]="cancellingId === rdv.id"
+              (click)="cancelRdv(rdv)">
+              Annuler
+            </button>
+          </div>
+        </li>
+      </ul>
+    </ng-container>
+
+    <ng-container *ngIf="!isLoadingRdv && activeTab === 'past'">
+      <p *ngIf="pastRdv.length === 0" class="list-state">Aucun rendez-vous passé.</p>
+      <ul *ngIf="pastRdv.length > 0" class="rdv-cards-list">
+        <li *ngFor="let rdv of pastRdv" class="rdv-row is-past">
+          <div class="rdv-row-main">
+            <span class="rdv-row-time">{{ rdv.hours }}</span>
+            <div class="rdv-row-meta">
+              <strong class="rdv-row-date">{{ rdv.dateLabel }}</strong>
+              <span class="rdv-row-type">{{ rdv.type | uppercase }}</span>
+            </div>
+          </div>
+          <span class="past-tag">Terminé</span>
+        </li>
+      </ul>
+    </ng-container>
+  </section>
+
+  <!-- COORDONNÉES CLIENT (TÉLÉPHONE) -->
+  <section class="phone-card">
+    <div class="phone-head">
+      <label for="profilePhone">TÉLÉPHONE</label>
+      <span class="phone-hint">Utilisé uniquement en cas d'imprévu sur votre RDV</span>
+    </div>
+    <div class="phone-row">
+      <input
+        id="profilePhone"
+        type="tel"
+        placeholder="04XX XX XX XX"
+        [(ngModel)]="phone"
+        autocomplete="tel">
+      <button type="button" class="phone-save-btn" [disabled]="savingPhone" (click)="savePhone()">
+        {{ savingPhone ? '…' : 'ENREGISTRER' }}
+      </button>
+    </div>
+  </section>
+
+  <!-- DÉCONNEXION & ZONE SENSIBLE DISCRÈTE -->
+  <section class="account-footer">
+    <button type="button" class="bttn_cyber logout-btn" (click)="logout()">DÉCONNEXION</button>
+
+    <div class="danger-toggle-wrap">
+      <button type="button" class="danger-toggle" (click)="showDangerZone = !showDangerZone">
+        {{ showDangerZone ? 'Masquer les options du compte' : 'Options du compte' }}
+      </button>
+
+      <div *ngIf="showDangerZone" class="danger-box">
+        <p>La suppression de votre compte est définitive et efface votre profil.</p>
+        <button type="button" class="danger-btn" (click)="deleteAccount()">Supprimer mon compte</button>
+      </div>
+    </div>
+  </section>
 </div>

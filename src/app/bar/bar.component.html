@@ -1,13 +1,38 @@
-<div class="cafe-ciseaux-card" *ngFor="let bar of barDetails ">
+<section class="bar-page" *ngFor="let bar of barDetails">
+  <div class="bar-top">
     <span class="cut_angle">
-        <h2>{{ bar.title | uppercase }}</h2>
+      <h2>{{ bar.title | uppercase }}.</h2>
     </span>
+    <span class="bar-eyebrow">MALMEDY · ESPACE DÉTENTE</span>
+  </div>
+
+  <div class="bar-media">
     <img [src]="bar.imageUrl" [alt]="bar.title">
+  </div>
+
+  <div class="bar-editorial">
     <h1>{{ bar.description }}</h1>
-    <p>{{ bar.text }}</p>    
-</div>
-<div class="beer_selection">
-    <div class="carte" [routerLink] = "['/beer-selection']">
-        <h2>NOTRE SÉLECTION</h2>
+    <p>{{ bar.text }}</p>
+  </div>
+
+  <div class="bar-highlights">
+    <div class="highlight-card">
+      <span class="hl-kicker">SÉLECTION</span>
+      <strong>Bières spéciales belges</strong>
     </div>
-</div>
+    <div class="highlight-card">
+      <span class="hl-kicker">AMBIANCE</span>
+      <strong>Café &amp; détente au comptoir</strong>
+    </div>
+  </div>
+
+  <div class="bar-actions">
+    <a class="bar-primary-cta" [routerLink]="['/beer-selection']">
+      <span>DÉCOUVRIR LA CARTE DES BIÈRES</span>
+      <span aria-hidden="true">→</span>
+    </a>
+    <a class="bar-secondary-cta" [routerLink]="['/rendez-vous']">
+      PRENDRE RENDEZ-VOUS
+    </a>
+  </div>
+</section>

@@ -9,15 +9,12 @@ export class AlertService {
     
   }
   showSucces(title:any,msg:any){
-    this.toastr.success(msg,title,  {positionClass:'inline',
-    timeOut:9000})
+    this.toastr.success(msg,title, { positionClass:'inline', timeOut: 4500 })
   }
   showError(title:any,msg:any){
-    this.toastr.error(msg,title,  {positionClass:'inline',
-    timeOut:9000})
+    this.toastr.error(msg,title, { positionClass:'inline', timeOut: 6000 })
   }
   showWarning(title:any,msg:any){
-    this.toastr.error(msg,title,  {positionClass:'inline',
-    timeOut:9000})
+    this.toastr.warning(msg,title, { positionClass:'inline', timeOut: 6000 })
   }
 }

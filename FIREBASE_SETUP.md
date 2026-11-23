@@ -78,7 +78,7 @@ Les uploads ultérieurs d'avatars utilisateurs et d'images de bières sont aussi
 
 ## 4. Structure exacte des collections Firestore
 
-L'application utilise **8 collections** à la racine de Firestore :
+L'application utilise **9 collections** à la racine de Firestore :
 
 ### 4.1 `horaires` *(à initialiser manuellement — 1 seul document)*
 Contient un document unique (ID libre, ex. `default`). **Attention au format** : chaque jour de la semaine est un **tableau contenant 1 objet**. Un jour fermé a des chaînes vides `""`.
@@ -96,7 +96,7 @@ Contient un document unique (ID libre, ex. `default`). **Attention au format** :
 ```
 
 ### 4.2 `admin` *(à initialiser manuellement)*
-Liste les comptes autorisés à accéder à l'interface `/admin`. Crée un document par administrateur après avoir créé son compte dans Authentication.
+Liste les comptes autorisés à accéder à l'interface `/admin`. Crée un document par administrateur après avoir créé son compte dans Authentication. L'app et les règles reconnaissent l'admin par l'**ID du document** (le champ `admin_id` est conservé mais n'est plus déterminant).
 
 > **Important (règles de sécurité)** : l'**ID du document doit être l'UID** de l'admin (et non un ID automatique). Les règles Firestore (`firestore.rules`) reconnaissent un admin par `admin/<UID>`.
 
@@ -121,7 +121,9 @@ Liste les comptes autorisés à accéder à l'interface `/admin`. Crée un docum
 ```
 > Pense à créer aussi un document correspondant dans `users/{uid}` pour ton compte admin si tu le crées directement depuis la console Firebase Auth.
 
-### 4.4 `rendez_vous` *(géré par l'app)*
+### 4.4 `rendez_vous` et `slots` *(gérés par l'app)*
+> **L'ID d'un rendez-vous est l'heure en millisecondes (UTC)** (ex. `1906189200000`), et le créneau correspondant est écrit dans `slots/<même ID>` (champ `date` seulement) dans le même batch. Les règles refusent une 2e réservation sur le même créneau, une date passée, et la lecture des rendez-vous des autres clients : les créneaux pris se lisent dans `slots`, sans nom ni avatar. Les rendez-vous créés avant ce changement (ID automatique) n'ont pas de créneau : ils n'apparaissent plus comme pris.
+
 ```json
 {
   "date": "Timestamp Firestore",
@@ -134,10 +136,13 @@ Liste les comptes autorisés à accéder à l'interface `/admin`. Crée un docum
 }
 ```
 
-### 4.5 `blocked_days` *(géré depuis `/admin/admin-schedule`)*
+### 4.5 `blocked_days` *(géré depuis `/admin/admin-schedule`, voir [BACKEND_HORAIRES.md](BACKEND_HORAIRES.md))*
+> **L'ID du document est la date `AAAA-MM-JJ`** (ex. `2026-07-14`) : les règles Firestore refusent toute réservation sur un jour bloqué. Un congé de plusieurs jours = un document par jour, avec le même `leave_id`.
 ```json
 {
-  "date": "Timestamp Firestore"
+  "date": "Timestamp Firestore (minuit à Paris)",
+  "leave_id": "string (optionnel, regroupe les jours d'un même congé)",
+  "label": "string (optionnel, ex. Vacances d'été)"
 }
 ```
 
@@ -169,8 +174,8 @@ Utilisée uniquement par `UsersService.getDemo()`. Attention : `LoginDemoCompone
 
 ## 5. Index composites Firestore
 
-Plusieurs requêtes combinent `.where(...)` et `.orderBy(...)`. Au premier lancement, Firestore affichera dans la console navigateur un lien direct pour créer automatiquement chaque index manquant :
-- `messages` : `(from_id ASC, date DESC)`, `(to_id ASC, date DESC)`, `(from_id ASC, to_id ASC, date ASC)`
+Les 5 index composites requis sont déclarés dans `firestore.indexes.json` (relié à `firebase.json`) et se déploient en une commande via `firebase deploy --only firestore:indexes` :
+- `messages` : `(from_id ASC, date DESC)`, `(to_id ASC, date DESC)`, `(from_id ASC, to_id ASC, date DESC)`
 - `rendez_vous` : `(user_id ASC, date ASC)` et `(user_id ASC, date DESC)`
 
 ---
@@ -183,14 +188,16 @@ Le fichier `firestore.rules` (référencé dans `firebase.json`) contient les r�
 npm install -g firebase-tools
 firebase login
 firebase use <TON_PROJET>
-firebase deploy --only firestore:rules,storage
+firebase deploy --only firestore:rules
 ```
 
-`storage.rules` organise le bucket en deux zones : `images/` (photos de bières et `AVATAR.svg`, écriture réservée aux admins) et `avatars/<uid>/` (avatars envoyés par les utilisateurs, formats JPEG/PNG/WebP/GIF, 5 Mo max). Le composant `file-upload` écrit désormais dans `avatars/<uid>/`. Les règles Storage s'appuient sur le document `admin/<UID>` de Firestore : déploie les deux ensemble.
+> `firebase.json` ne déploie que Firestore : Storage et Cloud Functions exigent le forfait Blaze. Utilise toujours `--only firestore:rules` (un `firebase deploy` complet échouerait). Pour activer Storage plus tard, ajoute `"storage": { "rules": "storage.rules" }` dans `firebase.json`.
+
+`storage.rules` (non déployé tant que Storage n'est pas activé) organise le bucket en deux zones : `images/` (photos de bières et `AVATAR.svg`, écriture réservée aux admins) et `avatars/<uid>/` (avatars envoyés par les utilisateurs, formats JPEG/PNG/WebP/GIF, 5 Mo max). Le composant `file-upload` écrit désormais dans `avatars/<uid>/`. Les règles Storage s'appuient sur le document `admin/<UID>` de Firestore : déploie les deux ensemble.
 
 ### Tester les règles (émulateur)
 
-Le dossier `rules-tests/` contient 41 tests automatiques (Firestore + Storage) qui rejouent les opérations réelles de l'app : inscription, réservation, messagerie, pages admin, uploads. Ils passent tous.
+Le dossier `rules-tests/` contient 69 tests automatiques (Firestore + Storage, config `firebase.tests.json`) qui rejouent les opérations réelles de l'app : inscription, réservation, double réservation, messagerie, pages admin, uploads. Ils passent tous.
 
 Prérequis : **Java 21 ou plus** (l'émulateur ne fonctionne pas avec Java 8).
 

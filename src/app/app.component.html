@@ -2,5 +2,5 @@
 <app-alert></app-alert>
 <div class="padding_block"></div>
 <router-outlet></router-outlet>
-<app-footer *ngIf="!isMsgUserPage && !isProfilePage && !isAdminMsgPage"></app-footer>
+<app-footer *ngIf="!isMsgUserPage && !isAdminMsgPage" [hideMovingPart]="isProfilePage"></app-footer>
 

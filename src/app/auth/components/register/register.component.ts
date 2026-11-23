@@ -13,6 +13,7 @@ export class RegisterComponent implements OnInit {
   isLogin: boolean = false;
   errorMessage: any;
   submitted: boolean = false; // Typé en boolean
+  socialLoading = false;
   
   // Correction du typage de la variable
   registerForm!: FormGroup;
@@ -29,6 +30,7 @@ export class RegisterComponent implements OnInit {
       nom: ['', Validators.required],
       prenom: ['', Validators.required],
       email: ['', Validators.compose([Validators.required, this.customValidator.emailValidator()])],
+      phone: [''],
       birthdate: [''],
       password: ['', Validators.compose([Validators.required, this.customValidator.patternValidator()])],
       confirmPassword: ['', Validators.required],
@@ -43,16 +45,41 @@ export class RegisterComponent implements OnInit {
   get password() { return this.registerForm.get('password'); }
   get confirmPassword() { return this.registerForm.get('confirmPassword'); }
 
-  // Connexion / inscription avec Google ou Apple
-  async socialLogin(provider: 'google' | 'apple') {
+  // Connexion / inscription avec Google
+  async googleLogin() {
+    if (this.socialLoading) return;
+    this.socialLoading = true;
     try {
-      await this.authService.loginWithProvider(provider);
-      this._toast.showSucces('LOGIN', 'vous êtes connecté');
+      const ok = await this.authService.loginWithGoogle();
+      if (ok) {
+        this._toast.showSucces('LOGIN', 'vous êtes connecté');
+      }
     } catch (error) {
       const message = this.authService.socialLoginErrorMessage(error);
       if (message) {
         this._toast.showError('CONNEXION', message);
       }
+    } finally {
+      this.socialLoading = false;
+    }
+  }
+
+  // Connexion / inscription avec Apple
+  async appleLogin() {
+    if (this.socialLoading) return;
+    this.socialLoading = true;
+    try {
+      const ok = await this.authService.loginWithApple();
+      if (ok) {
+        this._toast.showSucces('LOGIN', 'vous êtes connecté');
+      }
+    } catch (error) {
+      const message = this.authService.socialLoginErrorMessage(error);
+      if (message) {
+        this._toast.showError('CONNEXION', message);
+      }
+    } finally {
+      this.socialLoading = false;
     }
   }
 
@@ -76,13 +103,22 @@ export class RegisterComponent implements OnInit {
       return;
     } 
 
-    // Inscription Firebase : crée le compte, le profil Firestore et la session locale
-    // (le mot de passe n'est plus jamais copié dans le localStorage).
-    const created = await this.authService.signUp(this.registerForm.value);
-    if (created) {
-      this._toast.showSucces('INSCRIPTION', 'Votre compte a été enregistré, un E-mail de confirmation a été envoyé');
-    } else {
-      this._toast.showError('INSCRIPTION', "Le compte n'a pas pu être créé");
+    try {
+      await this.authService.signUp(this.registerForm.value);
+      this._toast.showSucces('INSCRIPTION', 'Votre compte a été enregistré, un e-mail de confirmation a été envoyé');
+    } catch (error: any) {
+      let msg = "Le compte n'a pas pu être créé, réessayez";
+      if (error?.code === 'auth/email-already-in-use') {
+        msg = 'Un compte existe déjà avec cette adresse e-mail';
+      } else if (error?.code === 'auth/invalid-email') {
+        msg = "L'adresse e-mail n'est pas valide";
+      } else if (error?.code === 'auth/weak-password') {
+        msg = 'Le mot de passe est trop faible';
+      } else if (error?.code === 'auth/network-request-failed') {
+        msg = 'Vérifiez votre connexion internet';
+      }
+      console.error(error);
+      this._toast.showError('INSCRIPTION', msg);
     }
   }
 }

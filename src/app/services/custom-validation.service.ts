@@ -22,8 +22,9 @@ export class CustomvalidationService {
       if (!control.value) {
         return null as any;
       }
-      const regex = new RegExp("^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$");
-      const valid = regex.test(control.value);
+      const trimmed = String(control.value).trim();
+      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+      const valid = regex.test(trimmed);
       return valid ? null : { invalidEmail: true } as any;
     };
   }

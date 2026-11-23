@@ -1,23 +1,28 @@
-<div class="back-bttn" [routerLink] = "['/bar']">
-    <img src="assets/BACK.svg">
-</div>
-<div class="cafe-ciseaux-card beer_card1" *ngFor="let bar of beer ">
-    <span class="cut_angle">
-        <h2>{{ bar.title | uppercase }}</h2>
-    </span>
-    <img [src]="bar.imageUrl" [alt]="bar.title">
-    <p>{{ bar.description }}</p>    
+<div class="back-bttn" [routerLink]="['/bar']" title="Retour au bar">
+  <img src="assets/BACK.svg" alt="Retour au bar">
 </div>
 
-<div class="cafe-ciseaux-card beer_card" >
-   <ul class="beers_list">
-        <li  *ngFor="let beer of allBeers" class="beerUnit">
-            <span class="cut_angle">
-                <h2>{{ beer.nom | uppercase }}</h2>
-            </span>
-            <img loading="lazy" decoding="async" [src]="beer.imageUrl" [alt]="beer.title">
-            <p>{{ beer.description }}</p>    
-        </li>
-    </ul>
+<div class="cafe-ciseaux-card beer_card1" *ngFor="let bar of beer">
+  <span class="cut_angle">
+    <h2>{{ bar.title | uppercase }}</h2>
+  </span>
+  <img [src]="bar.imageUrl" [alt]="bar.title">
+  <p>{{ bar.description }}</p>
 </div>
 
+<div class="cafe-ciseaux-card beer_card">
+  <p *ngIf="isLoading" class="beers-state">Chargement de la carte des bières…</p>
+  <p *ngIf="!isLoading && allBeers.length === 0" class="beers-state">
+    La sélection du moment sera bientôt disponible ici. Demandez-la directement au bar !
+  </p>
+
+  <ul *ngIf="!isLoading && allBeers.length > 0" class="beers_list">
+    <li *ngFor="let beer of allBeers" class="beerUnit">
+      <span class="cut_angle">
+        <h2>{{ beer.nom | uppercase }}</h2>
+      </span>
+      <img loading="lazy" decoding="async" [src]="beer.imageUrl" [alt]="beer.nom || beer.title || 'Bière'">
+      <p>{{ beer.description }}</p>
+    </li>
+  </ul>
+</div>

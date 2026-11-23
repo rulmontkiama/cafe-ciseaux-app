@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { AlertService } from './alert.service';
 
 // Pages réservées aux utilisateurs connectés (hors /admin, géré séparément)
-const PRIVATE_PATHS = ['/profile', '/rendez-vous', '/user-message'];
+const PRIVATE_PATHS = ['/profile', '/rendez-vous', '/user-message', '/file-upload'];
 
 @Injectable({
   providedIn: 'root'
@@ -42,8 +42,10 @@ export class AuthGuard implements CanActivate {
 
     if (isLoginPath) {
       if (user && await this.hasSession(user)) {
-        this._toast.showWarning('ALREADY CONNECT', 'vous êtes déjà connecté');
-        return this.router.parseUrl('/profile');
+        const adminIds = this.authService.getAdminId();
+        const target = Array.isArray(adminIds) && adminIds.includes(user.uid) ? '/admin' : '/profile';
+        this._toast.showWarning('DÉJÀ CONNECTÉ', 'Vous êtes déjà connecté');
+        return this.router.parseUrl(target);
       }
       return true;
     }

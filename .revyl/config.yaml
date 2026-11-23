@@ -1,0 +1,48 @@
+project:
+  id: 6ea46cab-8c96-43ec-80c3-3cb8fae535b2
+
+session:
+  idle_timeout_seconds: 1800
+
+build:
+  framework: ios
+  profiles:
+    preview:
+      web:
+        app_id: "45e00ee0-c0cc-4973-8c89-34c9818caecf"
+        setup_commands:
+          - "npm install --legacy-peer-deps"
+        build_commands:
+          - "npx ng build --configuration production"
+        output_path: "dist/cafe_ciseaux"
+      ios:
+        app_id: "85c8d8db-7e42-4fc3-9d89-d3bd21f4cb19"
+        build_commands:
+          - "npm install --legacy-peer-deps"
+          - "npx ng build --configuration production"
+          - "npx cap sync ios"
+          - "xcodebuild -workspace ios/App/App.xcworkspace -scheme App -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -configuration Debug -derivedDataPath ios/App/build CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0"
+        output_path: "ios/App/build/Build/Products/Debug-iphonesimulator/App.app"
+      android:
+        app_id: "cfd41116-54a3-412d-90d3-4e45d2b18f72"
+        build_commands:
+          - "npm install --legacy-peer-deps"
+          - "npx ng build --configuration production"
+          - "npx cap sync android"
+          - "cd android && chmod +x gradlew && ./gradlew assembleDebug"
+        output_path: "android/app/build/outputs/apk/debug/app-debug.apk"
+
+pr_review:
+  enabled: true
+  build:
+    kind: revyl
+    profile: preview
+  proof_of_changes:
+    enabled: true
+    harness:
+      kind: revyl
+    system_prompt: |
+      This is Café Ciseaux (Malmedy barber shop & craft beer bar, French UI).
+      Public views (Le Salon, Bar, Horaires) work without signing in.
+      For screens behind sign-in (RDV, Profil, Messages):
+      If the app is signed out, tap PRENDRE RENDEZ-VOUS or CONNEXION to open the login screen, then type {{global.REVYL_TEST_EMAIL}} into the email field, type {{global.REVYL_TEST_PASSWORD}} into the password field, and tap SE CONNECTER.

@@ -1,58 +1,60 @@
-<div class="search-container">
+<div class="manager-wrap">
+  <div class="admin-section-header">
+    <span class="cut_angle">
+      <h2>TOUS LES RDV.</h2>
+    </span>
+    <p>Recherchez par nom ou triez par date.</p>
+  </div>
+
+  <div class="search-container">
     <input
       type="text"
-      placeholder="Rechercher un rendez-vous..."
-      (input)="search($event)"
-    />
+      placeholder="Rechercher un client…"
+      [value]="searchTerm"
+      (input)="search($event)" />
+    <button type="button" class="sort-btn" (click)="toggleOrder()" title="Inverser l'ordre chronologique">
+      <span>{{ orderDirection === 'desc' ? 'Plus récents ↓' : 'Plus anciens ↑' }}</span>
+    </button>
+  </div>
 
-    <img (click)="toggleOrder()"  src="assets/sort.svg" > 
-</div>
-<ul class="RDV_list">
-    <li *ngFor="let rdv of rendezVous" class="rdvUnit" [attr.id]="'rdv-' + rdv.id" [ngClass]="{'has-passed': rdv.passed}">
-      <img *ngIf="rdv.passed" src="assets/BLOCKED.svg" class="passedImg">           
-  
-      <div *ngIf="!rdv.passed" class="RDV_delete">
-        <span id="{{rdv.id}}">
-          <img  data-id="{{rdv.id}}" (click)="removeRDV($event)" src="assets/DELETE.svg">   
-        </span>
+  <p *ngIf="!loading && rendezVous.length === 0" class="manager-state">
+    Aucun rendez-vous trouvé.
+  </p>
+
+  <ul *ngIf="rendezVous.length > 0" class="RDV_list">
+    <li
+      *ngFor="let rdv of rendezVous"
+      class="rdvUnit"
+      [attr.id]="'rdv-' + rdv.id"
+      [class.has-passed]="rdv.passed">
+      <div class="rdv-date-col">
+        <span class="rdv-hour">{{ rdv.hours }}</span>
+        <span class="rdv-date">{{ rdv.dateString }}</span>
       </div>
-  
+
       <div class="RDV_avatar">
-        <img loading="lazy" decoding="async" [src]="rdv.avatar" class="profile_user_pictures" alt="profile_user_pictures">
+        <img loading="lazy" decoding="async" [src]="rdv.avatar || 'assets/AVATAR.svg'" alt="Avatar client">
       </div>
-  
-      <div class="rdv_infos_container">
-        <div>                    
-          <div class="RDV_names cut_angle">
-            <h2>{{ rdv.nom | uppercase }}</h2>
-            <h2>{{ rdv.prenom | uppercase }}</h2>
-          </div> 
-  
-          <div class="RDV_left_list">
-            <div class="scissor_block">
-              <img src="assets/SCISSOR.svg">
-              <h1>{{ rdv.scissor }}</h1>
-            </div>
-            <div>
-              <p>{{ rdv.type | uppercase }}</p>
-            </div>
-          </div>
-        </div>
-      </div>           
-  
-      <div class="RDV_right_cont">
-        <div class="RDV_right_list cut_angle">
-          <div>
-            <p>{{ rdv.date.dateString  }}</p>
-          </div>
-          <div class="RDV_hours">
-            <p>{{ rdv.hours }}</p>
-          </div>
-        </div>
-      </div>     
-    </li>                       
-  </ul>
-  
-  <!-- Bouton pour charger plus de rendez-vous -->
 
-  
+      <div class="rdv_infos_container">
+        <strong class="rdv-client">{{ rdv.prenom | uppercase }} {{ rdv.nom | uppercase }}</strong>
+        <span class="rdv-meta">{{ rdv.type | uppercase }}</span>
+        <a *ngIf="rdv.phone" class="rdv-phone" [href]="'tel:' + rdv.phone">📞 {{ rdv.phone }}</a>
+      </div>
+
+      <div class="rdv-actions-col">
+        <span *ngIf="rdv.passed" class="status-passed">Passé</span>
+        <button
+          *ngIf="!rdv.passed"
+          type="button"
+          class="delete-rdv-btn"
+          [disabled]="isDeleteDisabled"
+          (click)="removeRDV($event, rdv.id)">
+          Supprimer
+        </button>
+      </div>
+    </li>
+  </ul>
+
+  <p *ngIf="loading" class="manager-state">Chargement…</p>
+</div>

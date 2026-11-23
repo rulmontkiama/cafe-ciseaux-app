@@ -1,8 +1,35 @@
-<div class="cafe-ciseaux-card">
+<section class="cafe-ciseaux-card salon-hero">
+  <div class="salon-top-row">
     <span class="cut_angle">
-        <h2>{{ cafeCiseau.title | uppercase }}</h2>
+      <h2>{{ cafeCiseau.title | uppercase }}</h2>
     </span>
-    <img [src]="cafeCiseau.imageUrl" [alt]="cafeCiseau.title">
-    <h1>{{ cafeCiseau.description }}</h1>
-    <p>{{ cafeCiseau.text }}</p>    
-</div>
+    <span *ngIf="todayStatusLabel" class="open-pill" [class.is-open]="isOpenToday">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span>{{ todayStatusLabel }}</span>
+    </span>
+  </div>
+
+  <!-- Annonce publique éditée par l'admin -->
+  <div *ngIf="hasActiveCommunication" class="home-comm-banner" role="region" aria-label="Annonce du salon">
+    <div class="comm-head">
+      <span class="comm-badge">{{ communication.badge }}</span>
+      <strong *ngIf="communication.title">{{ communication.title }}</strong>
+    </div>
+    <p *ngIf="communication.message">{{ communication.message }}</p>
+  </div>
+
+  <img [src]="cafeCiseau.imageUrl" [alt]="cafeCiseau.title">
+
+  <h1>{{ cafeCiseau.description }}</h1>
+  <p>{{ cafeCiseau.text }}</p>
+
+  <div class="salon-actions">
+    <a class="cta-primary" [routerLink]="['/rendez-vous']">PRENDRE RENDEZ-VOUS</a>
+    <a class="cta-secondary" [routerLink]="['/bar']">DÉCOUVRIR LE BAR</a>
+  </div>
+
+  <a class="salon-location" [href]="mapsUrl" target="_blank" rel="noopener noreferrer">
+    <span>Rle Grognet 8 · 4960 Malmedy</span>
+    <span aria-hidden="true">↗</span>
+  </a>
+</section>

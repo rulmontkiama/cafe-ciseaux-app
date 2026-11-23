@@ -1,24 +1,11 @@
-// calendar-view.component.ts
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { dayNames } from 'src/app/interface/day-names';
 import { RendezVousService } from '../services/rendez-vous.service';
 import { DateService } from '../services/date.service';
-import { ActivatedRoute } from '@angular/router';
-import { AuthenticationService } from 'src/app/services/authentication.service'; 
-import { Observable,Subscription} from 'rxjs';
-import { DateTime } from 'luxon';
-
-interface RendezVous {
-  id: string;
-  nom: string;
-  prenom: string;
-  avatar: string;
-  type: string;
-  date: string;
-  hours: string;
-  passed: boolean; 
-}
-
+import { AuthenticationService } from 'src/app/services/authentication.service';
+import { AlertService } from '../services/alert.service';
+import { UsersService } from '../services/users.service';
 
 @Component({
   selector: 'app-calendar-view',
@@ -26,123 +13,171 @@ interface RendezVous {
   styleUrls: ['./calendar-view.component.scss'],
 })
 export class CalendarViewComponent implements OnInit {
-
   currentYear: number;
   currentMonth: number;
-  daysInMonth: any
-  selectedDay: any
+  daysInMonth: any[] = [];
+  selectedDay: any = null;
   dayNames: any;
-  monthCount:any;
-  isCalendarVisible:any
-  isDeleteDisabled:boolean
+  monthCount = 0;
+  isCalendarVisible = true;
+  isDeleteDisabled = false;
+  isLoading = true;
+  onlyWithRdv = false;
+
+  readonly todayYear: number;
+  readonly todayMonth: number;
+  readonly todayDate: number;
 
   monthNames = [
-    'Janvier',
-    'Février',
-    'Mars',
-    'Avril',
-    'Mai',
-    'Juin',
-    'Juillet',
-    'Août',
-    'Septembre',
-    'Octobre',
-    'Novembre',
-    'Décembre',
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
   ];
-  public RDVData: any;
-  private appointmentsSubscription: Subscription | null = null;
+
+  public RDVData: any[] = [];
+  private phoneCache = new Map<string, string>();
 
   constructor(
-    private rendez_vous:RendezVousService,
-    private dateService:DateService,
+    private rendez_vous: RendezVousService,
+    private dateService: DateService,
     private route: ActivatedRoute,
     private authService: AuthenticationService,
+    private usersService: UsersService,
     private cdRef: ChangeDetectorRef,
-    
+    private _toast: AlertService
   ) {
     const today = new Date();
-    this.currentYear = today.getFullYear();
-    this.currentMonth = today.getMonth();
+    this.todayYear = today.getFullYear();
+    this.todayMonth = today.getMonth();
+    this.todayDate = today.getDate();
+    this.currentYear = this.todayYear;
+    this.currentMonth = this.todayMonth;
     this.dayNames = dayNames;
-    this.isCalendarVisible = true
-    this.isDeleteDisabled = false;    
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadAppointments();
   }
 
-async loadAppointments() {
+  get visibleDays(): any[] {
+    return this.onlyWithRdv
+      ? this.daysInMonth.filter((d) => d.rdvCount > 0)
+      : this.daysInMonth;
+  }
+
+  async loadAppointments(): Promise<void> {
+    this.isLoading = true;
     const currentRoute = this.route.snapshot.url.join('/');
-    let appointmentsData: any[] | null = null; // Nous allons stocker directement les données
+    const fullPath = this.route.snapshot.pathFromRoot.map((r) => r.url.map((u) => u.path).join('/')).join('/');
+    const isAdminView = currentRoute.includes('admin') || fullPath.includes('admin');
     const userId: any = this.authService.getId();
-    
+
     try {
-        if (currentRoute.includes('admin')) {
-            // Appel à la version ponctuelle du service
-            appointmentsData = await this.rendez_vous.getRDVForCurrentMonthOnce(this.currentYear, this.currentMonth);
-        } else {
-            // Appel à la version ponctuelle du service
-            appointmentsData = await this.rendez_vous.getRDVForCurrentUserMonthOnce(userId, this.currentYear, this.currentMonth);
-        }
-        
-        this.RDVData = appointmentsData || [];
-        this.monthCount = this.RDVData.length;
+      const appointmentsData = isAdminView
+        ? await this.rendez_vous.getRDVForCurrentMonthOnce(this.currentYear, this.currentMonth)
+        : await this.rendez_vous.getRDVForCurrentUserMonthOnce(userId, this.currentYear, this.currentMonth);
 
-        for (const rdv of this.RDVData) {
-            // Assurez-vous que rdv.date est bien un objet Timestamp de Firestore
-            // et accédez à .seconds si nécessaire, ou convertissez-le si c'est déjà un Date JS
-            const timestampInMs = rdv.date && typeof rdv.date.seconds === 'number' ? rdv.date.seconds * 1000 : rdv.date;
-            const formattedDate = this.dateService.formatDate(timestampInMs);
-            rdv.date = formattedDate.dateString;
-            rdv.hours = formattedDate.hours;
-            rdv.passed = formattedDate.passed;
-        }
+      this.RDVData = (appointmentsData || []).map((rdv: any) => {
+        const timestampInMs = rdv.date && typeof rdv.date.seconds === 'number' ? rdv.date.seconds * 1000 : Number(rdv.date);
+        const formattedDate = this.dateService.formatDate(timestampInMs);
+        return {
+          ...rdv,
+          timestampInMs,
+          date: formattedDate.dateString,
+          hours: formattedDate.hours,
+          passed: formattedDate.passed,
+        };
+      });
 
-        this.updateDaysInMonth();
-        this.cdRef.detectChanges(); // Forcer la détection des changements
+      this.monthCount = this.RDVData.length;
+      this.updateDaysInMonth();
 
+      if (isAdminView) {
+        this.hydratePhones(this.RDVData);
+      }
     } catch (error) {
-        console.error('Error handling appointments:', error);
+      console.error('Error handling appointments:', error);
+    } finally {
+      this.isLoading = false;
+      this.cdRef.detectChanges();
     }
-    // Note: this.appointmentsSubscription n'est plus nécessaire car il n'y a plus d'abonnement actif.
-    // console.log(this.appointmentsSubscription); // Cette ligne peut être supprimée
-}
+  }
 
-updateDaysInMonth() {
-  const lastDayOfMonth = new Date(this.currentYear, this.currentMonth + 1, 0);
-  const numberOfDays = lastDayOfMonth.getDate();
+  private async hydratePhones(items: any[]): Promise<void> {
+    const missingUids = Array.from(
+      new Set(
+        items
+          .filter((r) => !r.phone && r.user_id && r.user_id !== 'walk-in' && !this.phoneCache.has(r.user_id))
+          .map((r) => String(r.user_id))
+      )
+    );
 
-  this.daysInMonth = [];
+    if (missingUids.length > 0) {
+      await Promise.all(
+        missingUids.map(async (uid) => {
+          try {
+            const list = await this.usersService.getUser(uid);
+            this.phoneCache.set(uid, (list?.[0]?.phone || '').trim());
+          } catch {
+            this.phoneCache.set(uid, '');
+          }
+        })
+      );
+    }
 
-  for (let day = 1; day <= numberOfDays; day++) {
-    const dayDate = new Date(this.currentYear, this.currentMonth, day);
-    
-    // On crée une date de référence à minuit pour la comparaison
-    const referenceDate = new Date(this.currentYear, this.currentMonth, day);
-    referenceDate.setHours(0, 0, 0, 0);
+    let updated = false;
+    for (const r of items) {
+      if (!r.phone && r.user_id && this.phoneCache.get(r.user_id)) {
+        r.phone = this.phoneCache.get(r.user_id);
+        updated = true;
+      }
+    }
+    if (updated) {
+      this.cdRef.detectChanges();
+    }
+  }
 
-    const rendezVousForDay = this.RDVData.filter((rdv: any) => {
-      // Si rdv.date est déjà une string formatée par loadAppointments
-      // On s'assure que le format match EXACTEMENT (ex: "05/01/2026")
+  updateDaysInMonth(): void {
+    const lastDayOfMonth = new Date(this.currentYear, this.currentMonth + 1, 0);
+    const numberOfDays = lastDayOfMonth.getDate();
+    this.daysInMonth = [];
+
+    for (let day = 1; day <= numberOfDays; day++) {
+      const dayDate = new Date(this.currentYear, this.currentMonth, day);
       const formattedDay = day.toString().padStart(2, '0');
       const formattedMonth = (this.currentMonth + 1).toString().padStart(2, '0');
       const expectedStr = `${formattedDay}/${formattedMonth}/${this.currentYear}`;
-      
-      return rdv.date === expectedStr;
-    });
 
-    this.daysInMonth.push({
-      date: day,
-      dayName: this.dayNames[dayDate.getDay()].slice(0, 3),
-      rdvCount: rendezVousForDay.length,
-      rendezVous: rendezVousForDay,
-    });
+      const rendezVousForDay = this.RDVData
+        .filter((rdv: any) => rdv.date === expectedStr)
+        .sort((a: any, b: any) => a.timestampInMs - b.timestampInMs);
+
+      const isToday =
+        this.currentYear === this.todayYear &&
+        this.currentMonth === this.todayMonth &&
+        day === this.todayDate;
+
+      this.daysInMonth.push({
+        date: day,
+        dayName: this.dayNames[dayDate.getDay()].slice(0, 3),
+        rdvCount: rendezVousForDay.length,
+        rendezVous: rendezVousForDay,
+        isToday,
+      });
+    }
+    if (this.selectedDay) {
+      this.selectedDay = this.daysInMonth.find((d) => d.date === this.selectedDay.date) || null;
+    }
+    this.cdRef.detectChanges();
   }
-  this.cdRef.detectChanges();
-}
-  previousMonth() {
+
+  goToToday(): void {
+    this.currentYear = this.todayYear;
+    this.currentMonth = this.todayMonth;
+    this.isCalendarVisible = true;
+    this.loadAppointments();
+  }
+
+  previousMonth(): void {
     if (this.currentMonth === 0) {
       this.currentYear--;
       this.currentMonth = 11;
@@ -152,7 +187,7 @@ updateDaysInMonth() {
     this.loadAppointments();
   }
 
-  nextMonth() {
+  nextMonth(): void {
     if (this.currentMonth === 11) {
       this.currentYear++;
       this.currentMonth = 0;
@@ -162,55 +197,52 @@ updateDaysInMonth() {
     this.loadAppointments();
   }
 
-  selectDay(day: any) {
+  selectDay(day: any): void {
     this.selectedDay = day;
-    // Display the popup here
-    this.showPopup(day);
-    this.isCalendarVisible = false; 
+    this.isCalendarVisible = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-  showPopup(day: any) {
-    let message = `Rendez-vous pour le ${day.date} :\n\n`;
 
-    if (day.rendezVous.length === 0) {
-        message += "Aucun rendez-vous ce jour-là.";
-    } else {
-        day.rendezVous.forEach((rdv: any, index: number) => {
-            message += `${index + 1}. Nom: ${rdv.nom} ${rdv.prenom}\n`;
-            message += `   Heure: ${rdv.hours}\n`;
-            message += `   Type: ${rdv.type}\n`;
-            // Ajoutez d'autres informations pertinentes ici
-            message += `\n`;
-        });
+  async removeRDV(event: Event, explicitId?: string): Promise<void> {
+    event.stopPropagation();
+
+    if (this.isDeleteDisabled) {
+      return;
     }
 
+    const target = event.target as HTMLElement;
+    const rdvId = explicitId || target.getAttribute('data-id') || target.id || target.closest('[id]')?.id || '';
+    if (!rdvId) {
+      return;
+    }
 
-}
-removeRDV(event:Event){
-  
-  event.stopPropagation();
+    if (!window.confirm('Supprimer ce rendez-vous ?')) {
+      return;
+    }
 
-  if (this.isDeleteDisabled) {
-    return;
+    this.isDeleteDisabled = true;
+    try {
+      await this.rendez_vous.deleteAndUpdate(rdvId);
+      if (this.selectedDay?.rendezVous) {
+        this.selectedDay.rendezVous = this.selectedDay.rendezVous.filter((r: any) => r.id !== rdvId);
+        this.selectedDay.rdvCount = this.selectedDay.rendezVous.length;
+      }
+      this.RDVData = this.RDVData.filter((r: any) => r.id !== rdvId);
+      this.monthCount = this.RDVData.length;
+      this._toast.showSucces('SUPPRESSION', 'Rendez-vous supprimé');
+    } catch (error) {
+      console.error(error);
+      this._toast.showError('ERREUR', 'Impossible de supprimer ce rendez-vous');
+    } finally {
+      setTimeout(() => {
+        this.isDeleteDisabled = false;
+      }, 1500);
+      this.cdRef.detectChanges();
+    }
   }
 
-  // Désactiver la suppression pendant 5 secondes
-  this.isDeleteDisabled = true;
-  setTimeout(() => {
-    this.isDeleteDisabled = false;
-  }, 5000);
-
-  const target = event.target as HTMLTextAreaElement;
-  var RDV_id= target.id;
-  this.rendez_vous.deleteAndUpdate(RDV_id)
-  const rdvElement = document.getElementById('rdv-' + RDV_id);
-  if (rdvElement) {
-    rdvElement.remove();
+  showCalendar(): void {
+    this.isCalendarVisible = true;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-}
-showCalendar() {
-  this.isCalendarVisible = true;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
 }

@@ -5,6 +5,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { SharedModule } from '../shared/shared.module';
 import { AdminComponent } from './admin.component';
 import { DashboardComponent } from '../dashboard/dashboard.component';
+import { AdminOverviewComponent } from '../admin-overview/admin-overview.component';
 import { AdminRendezVousComponent } from '../admin-rendez-vous/admin-rendez-vous.component';
 import { AdminScheduleComponent } from '../admin-schedule/admin-schedule.component';
 import { AdminMessageComponent } from '../admin-message/admin-message.component';
@@ -19,7 +20,8 @@ const routes: Routes = [
     path: '',
     component: AdminComponent,
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'admin-rendez-vous' },
+      { path: '', pathMatch: 'full', redirectTo: 'overview' },
+      { path: 'overview', component: AdminOverviewComponent },
       { path: 'admin-rendez-vous', component: AdminRendezVousComponent },
       { path: 'admin-schedule', component: AdminScheduleComponent },
       { path: 'admin-message', component: AdminMessageComponent },
@@ -35,6 +37,7 @@ const routes: Routes = [
   declarations: [
     AdminComponent,
     DashboardComponent,
+    AdminOverviewComponent,
     AdminRendezVousComponent,
     AdminScheduleComponent,
     AdminMessageComponent,

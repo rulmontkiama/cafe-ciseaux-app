@@ -37,13 +37,26 @@ export class DateService {
   
   }
   convertToDate(lastVisibleDate: any): Date {
-    if (lastVisibleDate && lastVisibleDate.dateString && lastVisibleDate.hours) {
+    if (!lastVisibleDate) {
+      return new Date();
+    }
+    if (lastVisibleDate instanceof Date) {
+      return lastVisibleDate;
+    }
+    if (typeof lastVisibleDate.toDate === 'function') {
+      return lastVisibleDate.toDate();
+    }
+    if (typeof lastVisibleDate.seconds === 'number') {
+      return new Date(lastVisibleDate.seconds * 1000);
+    }
+    if (typeof lastVisibleDate === 'number') {
+      return new Date(lastVisibleDate);
+    }
+    if (lastVisibleDate.dateString && lastVisibleDate.hours) {
       const [day, month, year] = lastVisibleDate.dateString.split('/');
       const [hour, minute] = lastVisibleDate.hours.split(':');
-      
-      // Construire un objet Date avec les informations
       return new Date(`${month}/${day}/${year} ${hour}:${minute}:00`);
     }
-    return new Date();  // Si date non valide, retourner une date actuelle
+    return new Date();
   }
 }

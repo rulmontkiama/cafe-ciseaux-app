@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "406207272951",
+    "project_id": "cafe-ciseaux-e342d",
+    "storage_bucket": "cafe-ciseaux-e342d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:406207272951:android:d356452e8a9b9dd33900f2",
+        "android_client_info": {
+          "package_name": "com.cafe_ciseaux_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "406207272951-096l8t7mcndt7t7q2ui4v0sjcavust6k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXHfYOxkQJv3_dgNxh-po9WGZ_NRV3r-I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "406207272951-096l8t7mcndt7t7q2ui4v0sjcavust6k.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "406207272951-02jpjn7t33f5ilqq144sjg1o3fek98ck.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.cafeciseaux.myapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

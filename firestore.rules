@@ -68,12 +68,31 @@ service cloud.firestore {
     }
 
     // ---------- rendez_vous ----------
-    // Lecture ouverte aux utilisateurs connectés : la page de réservation interroge
-    // tous les rendez-vous d'un jour/mois pour griser les créneaux déjà pris.
-    // Limite connue : nom, prénom et avatar des autres clients restent lisibles.
-    // Pour l'éviter, il faudrait une collection séparée de créneaux (date seule).
+    // L'ID du document est l'heure du rendez-vous en millisecondes (UTC) : Firestore refuse de
+    // créer deux fois le même ID, donc deux clients ne peuvent plus prendre le même créneau.
+    // Un client ne lit que ses propres rendez-vous ; l'admin lit tout. Les créneaux pris,
+    // visibles de tous pour être grisés, sont dans la collection `slots` (sans données personnelles).
+    // Un rendez-vous et son créneau sont toujours écrits ensemble (même batch).
+    function rdvIdMatchesDate(id) {
+      return id == string(request.resource.data.date.toMillis());
+    }
+
+    // Jour bloqué (congés, fermeture) : le document blocked_days/<AAAA-MM-JJ> existe.
+    // Les règles ne connaissent pas l'heure de Paris : le jour est lu en UTC. C'est le même jour
+    // que celui de Paris pour tous les créneaux entre 02h59 et 23h59 à Paris, donc pour tout salon
+    // ouvert en journée (un créneau à 00h30 ou 01h30 à Paris serait contrôlé sur la veille).
+    function utcDayKey(d) {
+      return string(d.year()) + '-'
+        + (d.month() < 10 ? '0' : '') + string(d.month()) + '-'
+        + (d.day() < 10 ? '0' : '') + string(d.day());
+    }
+
+    function dayIsOpen(d) {
+      return !exists(/databases/$(database)/documents/blocked_days/$(utcDayKey(d)));
+    }
+
     match /rendez_vous/{rdvId} {
-      allow read: if isSignedIn();
+      allow read: if isAdmin() || isOwner(resource.data.user_id);
 
       allow create: if isAdmin()
         || (isOwner(request.resource.data.user_id)
@@ -82,6 +101,10 @@ service cloud.firestore {
             && request.resource.data.keys().hasAll(
                  ['date', 'type', 'user_id', 'nom', 'prenom', 'scissor'])
             && request.resource.data.date is timestamp
+            && request.resource.data.date > request.time
+            && rdvIdMatchesDate(rdvId)
+            && dayIsOpen(request.resource.data.date)
+            && existsAfter(/databases/$(database)/documents/slots/$(rdvId))
             && request.resource.data.type is string
             && request.resource.data.scissor is number);
 
@@ -91,6 +114,31 @@ service cloud.firestore {
             && changedKeys().hasOnly(['scissor', 'avatar']));
 
       allow delete: if isAdmin() || isOwner(resource.data.user_id);
+    }
+
+    // ---------- slots (créneaux pris) ----------
+    // Seulement la date : aucun nom, prénom ni avatar. Lisible par tout utilisateur connecté.
+    match /slots/{slotId} {
+      allow read: if isSignedIn();
+
+      allow create: if isAdmin()
+        || (request.resource.data.keys().hasOnly(['date'])
+            && request.resource.data.date is timestamp
+            && request.resource.data.date > request.time
+            && slotId == string(request.resource.data.date.toMillis())
+            && dayIsOpen(request.resource.data.date)
+            && existsAfter(/databases/$(database)/documents/rendez_vous/$(slotId))
+            && getAfter(/databases/$(database)/documents/rendez_vous/$(slotId)).data.user_id
+                 == request.auth.uid);
+
+      allow update: if false;
+
+      // Libéré par le propriétaire du rendez-vous correspondant (ou l'admin).
+      allow delete: if isAdmin()
+        || (isSignedIn()
+            && exists(/databases/$(database)/documents/rendez_vous/$(slotId))
+            && get(/databases/$(database)/documents/rendez_vous/$(slotId)).data.user_id
+                 == request.auth.uid);
     }
 
     // ---------- horaires ----------

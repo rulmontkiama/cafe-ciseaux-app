@@ -1,11 +1,10 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import {Observable, map, of ,Subscription, first,firstValueFrom} from 'rxjs';
+import { Observable, map, firstValueFrom } from 'rxjs';
 import { RendezVous } from '../models/rendez-vous';
 import { FirebaseService } from './fire-base-service.service';
 import { Users } from '../models/users';
 import { DateService } from './date.service';
-import { collection, query, where, getDocs, QuerySnapshot, orderBy } from '@angular/fire/firestore';
 import { DateTime } from 'luxon';
 @Injectable({
   providedIn: 'root'
@@ -18,21 +17,30 @@ export class RendezVousService {
     
   ) {    
   }
-  getUserRDV(uid: string): Observable<RendezVous[]> {  
+  private toMs(date: any): number {
+    if (!date) return 0;
+    if (typeof date.toMillis === 'function') return date.toMillis();
+    if (typeof date.seconds === 'number') return date.seconds * 1000;
+    if (date instanceof Date) return date.getTime();
+    return Number(date) || 0;
+  }
+
+  getUserRDV(uid: string): Observable<RendezVous[]> {
+    // Requête par égalité simple (aucun index composite requis) + tri décroissant côté client
     return this.db.collection<RendezVous>('rendez_vous', ref => ref
-        .where('user_id', '==', uid)
-        .orderBy('date', 'desc'))
+        .where('user_id', '==', uid))
         .snapshotChanges()
         .pipe(
-            map(RendezVous => {
-                return RendezVous.map(a => {
+            map(rdvs => {
+                return rdvs
+                  .map(a => {
                     const data = a.payload.doc.data() as RendezVous;
-                    data.id = a.payload.doc.id  
-                    return data;
-                });
+                    return { ...data, id: a.payload.doc.id };
+                  })
+                  .sort((a, b) => this.toMs(b.date) - this.toMs(a.date));
             })
-        );    
-}
+        );
+  }
 
   getScissor(uid: string): Promise<any> {
     // Lecture unique (avant : écoute qui ne se fermait jamais, et promesse bloquée en cas d'erreur)
@@ -158,41 +166,32 @@ async searchRDV(term: string): Promise<RendezVous[]> {
     );
   }*/
 
-  getAllRDVLazy(lastVisibleDate: any, limit: number, orderDirection: 'asc' | 'desc'): Observable<any> {
-    
-    let newItem: any;
-    let query = this.db.collection<RendezVous>('rendez_vous', ref => 
-      ref.orderBy('date', orderDirection).limit(limit)
-    );
-  
-    if (lastVisibleDate) {
-      const dateTimestamp = this.dateService.convertToDate(lastVisibleDate); // Convertir en date ou timestamp
-      query = this.db.collection<RendezVous>('rendez_vous', ref => 
-        ref.orderBy('date', orderDirection)
-           .startAfter(dateTimestamp)
-           .limit(limit)
-      );
-    }
-  
-    return query.snapshotChanges().pipe(
-      map(RendezVous => {
-        return RendezVous.map(a => {               
-          newItem = a.payload.doc.data();
-          newItem.id = a.payload.doc.id;         
-          return newItem as RendezVous;          
-        });
-      })
+  getAllRDVLazy(lastVisibleDate: any, limit: number, orderDirection: 'asc' | 'desc'): Observable<RendezVous[]> {
+    const query = this.db.collection<RendezVous>('rendez_vous', ref => {
+      let q = ref.orderBy('date', orderDirection);
+      if (lastVisibleDate) {
+        const dateTimestamp = this.dateService.convertToDate(lastVisibleDate);
+        q = q.startAfter(dateTimestamp);
+      }
+      return q.limit(limit);
+    });
+
+    // Lecture ponctuelle .get() pour éviter que snapshotChanges() ne renvoie uniquement le cache local partiel
+    return query.get().pipe(
+      map(snapshot =>
+        snapshot.docs.map(doc => {
+          const data = doc.data() as RendezVous;
+          const { id: _, ...rest } = data;
+          return { ...rest, id: doc.id };
+        })
+      )
     );
   }
   
 async getRDVForCurrentMonthOnce(year: number, month: number): Promise<RendezVous[]> {
-  // Avec Luxon, month est de 1 à 12 (pas besoin de faire -1)
-// Si month arrive en tant qu'index 0-11 (ex: 11 pour décembre)
-    // On ajoute +1 pour que Luxon comprenne "Mois 12"
-    const luxonMonth = month + 1; 
-    
-    const startOfMonth = DateTime.fromObject({ year, month: luxonMonth }).startOf('month').toJSDate();
-    const endOfMonth = DateTime.fromObject({ year, month: luxonMonth }).endOf('month').toJSDate();
+    const luxonMonth = month + 1;
+    const startOfMonth = DateTime.fromObject({ year, month: luxonMonth }, { zone: 'Europe/Paris' }).startOf('month').toJSDate();
+    const endOfMonth = DateTime.fromObject({ year, month: luxonMonth }, { zone: 'Europe/Paris' }).endOf('month').toJSDate();
 
     const q = this.db.collection<RendezVous>('rendez_vous', ref => ref
       .where('date', '>=', startOfMonth)
@@ -212,26 +211,26 @@ async getRDVForCurrentMonthOnce(year: number, month: number): Promise<RendezVous
   }
 
   async getRDVForCurrentUserMonthOnce(userId: string, year: number, month: number): Promise<RendezVous[]> {
-    const startOfMonth = new Date(year, month, 1);
-    const endOfMonth = new Date(year, month + 1, 0,23, 59, 59);
-    
-    
-    const q = this.db.collection<RendezVous>('rendez_vous', ref => ref
-      .where('user_id', '==', userId)
-      .where('date', '>=', startOfMonth)
-      .where('date', '<=', endOfMonth)
-      .orderBy('date', 'asc'));
+    const luxonMonth = month + 1;
+    const startMs = DateTime.fromObject({ year, month: luxonMonth }, { zone: 'Europe/Paris' }).startOf('month').toMillis();
+    const endMs = DateTime.fromObject({ year, month: luxonMonth }, { zone: 'Europe/Paris' }).endOf('month').toMillis();
 
-    // Utilisez firstValueFrom
+    const q = this.db.collection<RendezVous>('rendez_vous', ref => ref
+      .where('user_id', '==', userId));
+
     const snapshot = await firstValueFrom(q.get());
 
-    return snapshot.docs.map(doc => {
-      const data = doc.data() as RendezVous;
-      const id = doc.id;
-      // ... résoudre l'erreur d'ID ici ...
-      const { id: _, ...restOfData } = data; // Exclure 'id' si elle est dans 'data'
-      return { id, ...restOfData };
-    });
+    return snapshot.docs
+      .map(doc => {
+        const data = doc.data() as RendezVous;
+        const { id: _, ...restOfData } = data;
+        return { id: doc.id, ...restOfData };
+      })
+      .filter(rdv => {
+        const ms = this.toMs(rdv.date);
+        return ms >= startMs && ms <= endMs;
+      })
+      .sort((a, b) => this.toMs(a.date) - this.toMs(b.date));
   }
   
   getRDVForCurrentMonth(currentYear: any, currentMonth: any): Observable<any> {
@@ -255,77 +254,46 @@ async getRDVForCurrentMonthOnce(year: number, month: number): Promise<RendezVous
 }
 
 
-getRDVForCurrentUserMonth(userId: string, currentYear: any, currentMonth: any): Observable<any> {
-    const startOfMonth = new Date(currentYear, currentMonth, 1);
-    const endOfMonth = new Date(currentYear, currentMonth + 1, 0);
+  getRDVForCurrentUserMonth(userId: string, currentYear: any, currentMonth: any): Observable<any> {
+    const luxonMonth = Number(currentMonth) + 1;
+    const startMs = DateTime.fromObject({ year: Number(currentYear), month: luxonMonth }, { zone: 'Europe/Paris' }).startOf('month').toMillis();
+    const endMs = DateTime.fromObject({ year: Number(currentYear), month: luxonMonth }, { zone: 'Europe/Paris' }).endOf('month').toMillis();
 
     return this.db.collection('rendez_vous', ref => ref
-        .where('user_id', '==', userId)
-        .where('date', '>=', startOfMonth)
-        .where('date', '<=', endOfMonth)
-        .orderBy('date', 'asc'))
+        .where('user_id', '==', userId))
         .snapshotChanges()
         .pipe(
-            map(RendezVous => {
-                return RendezVous.map(a => {
-                    let newItem: any = a.payload.doc.data();
-                    newItem.id = a.payload.doc.id;
-                    return newItem;
-                });
+            map(rdvs => {
+                return rdvs
+                  .map(a => {
+                    const data: any = a.payload.doc.data();
+                    return { ...data, id: a.payload.doc.id };
+                  })
+                  .filter(r => {
+                    const ms = this.toMs(r.date);
+                    return ms >= startMs && ms <= endMs;
+                  })
+                  .sort((a, b) => this.toMs(a.date) - this.toMs(b.date));
             })
         );
-}
-
-
-  deleteRDV(uid: string): Promise<void> {
-    return this.db.collection('rendez_vous').doc(uid).delete();
   }
-  async deleteAndUpdate(rdv_id: string) {
-    /*
-    scissor du rdv supprimé : 3
-    si supprimé les rendez_vous supéreieur si il y en à :
-      le premier rdv supérieur
-    */ 
-    try {
-      // Récupération de l'user_id du RDV supprimé
-      const rdvDoc:any = await this.db.collection('rendez_vous').doc(rdv_id).get().toPromise();
-      const rdvData = rdvDoc.data();
-      const user_id = rdvData.user_id;
-      const date = rdvData.date;
-      const oldScissor = rdvData.scissor;
-  
-      // Suppression du rendez-vous
-      await this.deleteRDV(rdv_id);
-  
-      // Mise à jour du champ scissor dans la collection users
-      const userRef = this.db.collection('users').doc(user_id);
-      const userDoc:any = await userRef.get().toPromise();
-      const userScissor = userDoc.data()?.scissor;
-      await userRef.update({ scissor: userScissor-1 });
-  
-      // Récupère les rendez_vous supérieur au rendez_vous supprimé
-      const rdvRef = this.db.collection('rendez_vous').ref;
-      const rdvQuery = rdvRef.where('user_id', '==', user_id).where('date', '>', date);
-      const rdvDocs = await rdvQuery.get();
-      const rdvBatch = this.db.firestore.batch();
-      let scissorCount = oldScissor || 0;
-  
-      // Boucle des rendez_vous supérieur au rendez_vous supprimé
-      let isFirstPass = true;      
-      rdvDocs.forEach(rdvDoc => {
-        if (isFirstPass) {
-          isFirstPass = false;
-        } else {
-          scissorCount = scissorCount >= 5 ? 1 : scissorCount + 1;
-        }      
-        // Mise à jour du champ scissor dans la collection rendez-vous
-        rdvBatch.update(rdvRef.doc(rdvDoc.id), { scissor: scissorCount });
-      });
-      await rdvBatch.commit();
-  
-    } catch (error) {
-      console.error(error);
-    }
+
+
+  /** true si quelqu'un a déjà réservé ce créneau (lecture unique de slots/<heure en ms>). */
+  async isSlotTaken(date: Date): Promise<boolean> {
+    const snap: any = await firstValueFrom(this.db.collection('slots').doc(String(date.getTime())).get());
+    return !!snap?.exists;
+  }
+  /** Supprime le rendez-vous et libère son créneau (collection slots) en une seule écriture. */
+  deleteRDV(rdvId: string): Promise<void> {
+    const batch = this.db.firestore.batch();
+    batch.delete(this.db.collection('rendez_vous').doc(rdvId).ref);
+    batch.delete(this.db.collection('slots').doc(rdvId).ref);
+    return batch.commit();
+  }
+  async deleteAndUpdate(rdv_id: string): Promise<void> {
+    // Suppression atomique du rendez-vous et libération du créneau dans slots
+    await this.deleteRDV(rdv_id);
   }
   async addRDV(rdvForm:any) { 
     const dateTimestamp = rdvForm.date;  
@@ -336,12 +304,13 @@ getRDVForCurrentUserMonth(userId: string, currentYear: any, currentMonth: any): 
       return;
     }
    
-    // Créer un référence à la collection "rendez_vous"
-    const rendezVousRef = this.db.collection('rendez_vous');
-
-    // Ajouter le document avec les données converties
-    await rendezVousRef.doc().set({
-      date: dateTimestamp,
+    // L'ID du rendez-vous est l'heure en millisecondes : Firestore refuse un 2e rendez-vous au même
+    // créneau (règles de sécurité). Le créneau est écrit dans `slots` dans le même batch.
+    const date: Date = dateTimestamp instanceof Date ? dateTimestamp : dateTimestamp.toDate();
+    const id = String(date.getTime());
+    const batch = this.db.firestore.batch();
+    batch.set(this.db.collection('rendez_vous').doc(id).ref, {
+      date: date,
       type: rdvForm.type,
       user_id: rdvForm.user_id,
       nom: rdvForm.nom,
@@ -349,6 +318,8 @@ getRDVForCurrentUserMonth(userId: string, currentYear: any, currentMonth: any): 
       scissor: rdvForm.scissor,
       avatar: rdvForm.avatar
     });
+    batch.set(this.db.collection('slots').doc(id).ref, { date: date });
+    await batch.commit();
   }
   
   async getRendezVousDataLength(uid: string): Promise<number> {
@@ -461,26 +432,21 @@ le rendez-vous.
   updateUserScissor(rdvForm:any): Promise<void> {
     return this.db.collection('users').doc(rdvForm.user_id).update({ scissor: rdvForm.scissor });
   }
-  available_date(date: string):Observable<any> {
-    const timestamp = new Date(date);
-    const startOfDay = new Date(timestamp.getFullYear(), timestamp.getMonth(), timestamp.getDate());
-    const endOfDay = new Date(timestamp.getFullYear(), timestamp.getMonth(), timestamp.getDate() );
-    endOfDay.setHours(23,59,0)
-    return this.db.collection('rendez_vous', ref => ref
-    .where('date', '>=', startOfDay)
-    .where('date', '<', endOfDay)
-    .orderBy('date','desc')).snapshotChanges()
-    .pipe(
-      map(RendezVous => {
-        return RendezVous.map(a => {               
-         const data:any = a.payload.doc.data()    
-          return data;          
-        })
-      })
-    )
+  available_date(date: string): Observable<any> {
+    const parisDay = DateTime.fromISO(date, { zone: 'Europe/Paris' });
+    const startOfDay = parisDay.isValid ? parisDay.startOf('day').toJSDate() : new Date(date);
+    const endOfDay = parisDay.isValid
+      ? parisDay.endOf('day').toJSDate()
+      : new Date(startOfDay.getTime() + 86399000);
+
+    return this.db.collection('slots', ref => ref
+      .where('date', '>=', startOfDay)
+      .where('date', '<=', endOfDay)
+      .orderBy('date', 'desc'))
+      .snapshotChanges()
+      .pipe(
+        map(slots => slots.map(a => a.payload.doc.data() as any))
+      );
   }
-}
-function subscribe(arg0: (supplier: any) => void) {
-  throw new Error('Function not implemented.');
 }
 

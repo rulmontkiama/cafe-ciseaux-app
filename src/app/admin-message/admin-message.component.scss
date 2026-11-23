@@ -1,65 +1,169 @@
-.admin_search{
-    display: flex;
-    background-color: unset;
-    color: white;
-    border-bottom: solid white 0.3vw;
-    padding-top: 5vw;
-    width: max-content;
-    padding-bottom: 2vw;;
-    margin: auto;
-    .admin_search_input{
-        background-color: unset;
-        border: 0;
-        color: white;
-        width: -webkit-fill-available;
-    }
-    img{
-        height: 5vw;
-        margin: auto;
-        margin-left: 0;
-    }
+.admin-msg-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
-.user_find_container{
-    li{
-        color: white;
-        display: flex;
-        padding-top: 3vw;
-        position: relative;
-        .unread{
-            width: 3vw;
-            position: absolute;
-            padding: 1vw;
-            top: 2vw;
-            left: 11vw;
-            height: 3vw;
-            border-radius: 10vw;
-            background-color: red;
-            display: flex;
-            z-index: 64;
-            p{
-                margin: auto;
-                font-size: 2vw;
-            }
-        }
+
+.admin-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--ink-muted);
+  }
+}
+
+.admin_search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background-color: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+
+  img {
+    height: 18px;
+    width: auto;
+    opacity: 0.7;
+    flex: none;
+  }
+
+  .admin_search_input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    color: var(--ink);
+    font-size: 14px;
+
+    &:focus {
+      outline: none;
     }
-    .find_split{
-        display: flex;
-        flex-direction: column;
-        margin-left: 2vw !important;
-        .msg_find{
-            padding-top: 2vw;
-        }
-    }
-    .avatar_find{
-        position: relative;
-        display: flex;
-        width: 14vw;
-        border: 0.5vw solid white;
-        height: 14vw;
-        overflow: hidden;
-        img{
-            width: -webkit-fill-available;
-            margin: auto;
-        }        
-    }
+  }
+}
+
+.msg-state {
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 14px;
+  padding: 24px 8px;
+  margin: 0;
+}
+
+.user_find_list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.chat-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background-color: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+
+  &:hover {
+    border-color: var(--ink);
+  }
+
+  &.is-unread {
+    border-color: var(--accent);
+    background-color: var(--surface-elevated);
+  }
+}
+
+.avatar_find {
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  overflow: hidden;
+  flex: none;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.find_split {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-preview-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  .names_find {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--ink);
+  }
+
+  .unread-badge {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    background-color: var(--accent);
+    color: var(--bg);
+    border-radius: var(--radius);
+  }
+}
+
+.msg_find {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conv-header-bar {
+  margin-bottom: 14px;
+}
+
+.back-inbox-btn {
+  padding: 7px 12px;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+}
+
+.submit_container {
+  border: 0;
 }

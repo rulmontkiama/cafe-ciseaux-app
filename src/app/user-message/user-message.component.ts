@@ -1,117 +1,138 @@
-import { Component, SecurityContext, ViewChild } from '@angular/core';
+import { Component, OnDestroy, ViewChild } from '@angular/core';
+import { Subscription, map } from 'rxjs';
 import { MessageService } from '../services/message.service';
 import { AuthenticationService } from '../services/authentication.service';
 import { Message } from '../models/message.model';
-import { Timestamp } from 'firebase/firestore';
-import { DomSanitizer } from '@angular/platform-browser';
 import { AlertService } from '../services/alert.service';
-import { map } from 'rxjs';
 import { DateService } from '../services/date.service';
-import { AdminService } from '../services/admin.service';
 import { UsersService } from '../services/users.service';
+
 @Component({
   selector: 'app-user-message',
   templateUrl: './user-message.component.html',
   styleUrls: ['./user-message.component.scss']
 })
-export class UserMessageComponent {
+export class UserMessageComponent implements OnDestroy {
   @ViewChild('submitButton') submitButton: any;
-  messageListing!:  Message[]  ;
-  newMessage: string = '';
+  messageListing!: Message[];
+  newMessage = '';
   selectedMessage: Message | undefined;
-  conversation:any
-  userDetails:any
-  currentMsg:any
-  isRead:any
-  adminUser: any
+  conversation: any[] = [];
+  userDetails: any;
+  currentMsg: any;
+  isRead: any;
+  adminUser: any;
+  isLoading = true;
+  noRecipient = false;
+
+  private convSub?: Subscription;
 
   constructor(
     private authService: AuthenticationService,
-    private msgService:MessageService,
-    private sanitizer: DomSanitizer,
-    private _toast:AlertService,
-    private dateService:DateService,
-    private adminService:AdminService,
-    private userService: UsersService,
-  ){
+    private msgService: MessageService,
+    private _toast: AlertService,
+    private dateService: DateService,
+    private userService: UsersService
+  ) {}
 
-  }
-  async ngOnInit(){
-    this.userDetails= await this.authService.getUserInfos()
-    // getAdminId() renvoie la LISTE des admins : on prend la première id (avant : admin.admin_id valait undefined)
+  async ngOnInit(): Promise<void> {
+    this.userDetails = await this.authService.getUserInfos();
     const adminId = this.authService.getFirstAdminId();
     if (!adminId) {
-      this._toast.showWarning('MESSAGERIE', 'aucun destinataire disponible pour le moment');
+      this.isLoading = false;
+      this.noRecipient = true;
+      this._toast.showWarning('MESSAGERIE', 'Aucun destinataire disponible pour le moment');
       return;
     }
-    this.adminUser =  await this.userService.getSender(adminId);
-    if(Array.isArray(this.adminUser)){
+
+    this.adminUser = await this.userService.getSender(adminId);
+    if (Array.isArray(this.adminUser)) {
       this.adminUser = this.adminUser[0];
     }
-    
-    (await this.msgService.getConversation(adminId, this.userDetails))
-    .pipe(
-      map(conversation => {
-        // Modifier la date pour chaque message de la conversation
-        conversation.forEach(message => {
-          const formattedDate = this.dateService.formatDate(message.date.seconds * 1000);
-          message.date = formattedDate.dateString;
-          message.hours = formattedDate.hours;
-        });
-        return conversation;
-      })
-    )
-    .subscribe(
-      conversation => {
-        this.conversation = conversation;
-        // Faire des actions avec les données récupérées
-      },
-      error => {
-        console.error(error);
-        // Gérer l'erreur
-      }
-    );
 
-  // Observer les changements dans la collection de messages
-
-    
+    this.convSub = (await this.msgService.getConversation(adminId, this.userDetails))
+      .pipe(
+        map((conversation) => {
+          conversation.forEach((message) => {
+            const ms =
+              typeof message.date?.toMillis === 'function'
+                ? message.date.toMillis()
+                : typeof message.date?.seconds === 'number'
+                  ? message.date.seconds * 1000
+                  : message.date instanceof Date
+                    ? message.date.getTime()
+                    : Date.now();
+            const formattedDate = this.dateService.formatDate(ms);
+            message.date = formattedDate.dateString;
+            message.hours = formattedDate.hours;
+          });
+          return conversation;
+        })
+      )
+      .subscribe({
+        next: (conversation) => {
+          this.conversation = conversation || [];
+          this.isLoading = false;
+          this.msgService.updateIsRead(adminId, this.userDetails).catch(() => {});
+          setTimeout(() => {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+          }, 50);
+        },
+        error: (error) => {
+          console.error(error);
+          this.isLoading = false;
+        }
+      });
   }
-  async onSendMessage() {
+
+  ngOnDestroy(): void {
+    this.convSub?.unsubscribe();
+  }
+
+  onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.onSendMessage();
+    }
+  }
+
+  async onSendMessage(): Promise<boolean> {
     const adminId = this.authService.getFirstAdminId();
     if (!this.newMessage || !adminId) {
       return false;
     }
-    // Le texte est affiché via {{ }} (échappé par Angular) : pas besoin de l'encoder en HTML ici.
-    // Avant : newMessage était vidé AVANT l'envoi, donc des messages vides partaient en base.
     const textToSend = this.newMessage.trim();
-    if (!textToSend.trim()) {
+    if (!textToSend) {
       return false;
     }
-    const messageTimestamp = Timestamp.fromDate(new Date());
-    // Compte de démo (optionnel) : la collection demo peut être vide ou absente
+    if (textToSend.length > 2000) {
+      this._toast.showWarning('MESSAGE TROP LONG', 'Maximum 2000 caractères par message');
+      return false;
+    }
+    const messageTimestamp = new Date();
     let demoId: any = null;
     try {
       const demoData = await this.userService.getDemo();
       demoId = demoData?.[0]?.demo_id ?? null;
-    } catch (e) {
+    } catch {
       demoId = null;
     }
     this.newMessage = '';
     if (demoId && demoId == this.userDetails.uid) {
-      this._toast.showSucces('CONFIRMATION','Le message à été envoyé(démo)')
+      this._toast.showSucces('CONFIRMATION', 'Le message a été envoyé (démo)');
       return false;
     }
     try {
       await this.msgService.onSendMessage(this.userDetails.uid, adminId, textToSend, messageTimestamp);
-      this._toast.showSucces('CONFIRMATION','Le message à été envoyé')
+      this._toast.showSucces('CONFIRMATION', 'Le message a été envoyé');
     } catch (error) {
       console.error(error);
       this._toast.showError('ERREUR', "Le message n'a pas pu être envoyé");
     }
     return true;
   }
+
   triggerSubmit(): void {
     this.submitButton.nativeElement.click();
   }
-
 }

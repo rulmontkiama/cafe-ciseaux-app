@@ -1,313 +1,296 @@
-import { Component } from '@angular/core';
-import { animate, AUTO_STYLE, state, style, transition, trigger } from '@angular/animations';
-import { monthLong } from 'src/app/interface/month-long';
-import { monthNames } from 'src/app/interface/month-names';
-import { dayNames } from 'src/app/interface/day-names';
-import { ScheduleService } from '../services/schedule.service';
-import { MyHammerConfig } from 'src/app/config/my-hammer-config';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { ScheduleService, ScheduleValidationError } from '../services/schedule.service';
+import { SalonCatalogService } from '../services/salon-catalog.service';
+import { Leave } from '../models/leave';
+import { Prestation } from '../models/types';
 import { weekdays } from 'src/app/models/weekdays.model';
 import { AlertService } from '../services/alert.service';
+
 @Component({
   selector: 'app-admin-schedule',
   templateUrl: './admin-schedule.component.html',
-  styleUrls: ['./admin-schedule.component.scss'],  animations: [
-    trigger('collapse', [
-      state('false', style({         
-        height:AUTO_STYLE,
-        visibility: AUTO_STYLE
-      })),
-      state('true', style({     
-        visibility: 'hidden' ,
-        height: '0vw',
-      })),
-      transition('false => true', animate('700ms ease-in')),
-      transition('true => false', animate('700ms ease-out'))
-    ])
-  ],
-  providers: [MyHammerConfig]  
+  styleUrls: ['./admin-schedule.component.scss']
 })
-export class AdminScheduleComponent {
-  public blockDays: any;
-  weekdays = weekdays
-  daysWithIsBook: any;
+export class AdminScheduleComponent implements OnInit, OnDestroy {
+  readonly weekdays = weekdays;
+  leaves: Leave[] = [];
+  daysWithIsBook: { dayName: string; isBook: boolean }[] = [];
+  schedule: any = null;
+  scheduleKeys: string[] = [];
+  isLoading = true;
+  initializing = false;
+  resetting = false;
+  copyingDay: string | null = null;
+
+  // Formulaire de congé / fermeture (1 jour ou période)
+  leaveStart = '';
+  leaveEnd = '';
+  leaveLabel = '';
+  savingLeave = false;
+
+  // Éditeur Prestations & Tarifs
+  prestations: Prestation[] = [];
+  savingPrestations = false;
+
+  private leavesSub?: Subscription;
+  private scheduleSub?: Subscription;
+  private prestationsSub?: Subscription;
+
   constructor(
     private scheduleService: ScheduleService,
-    private _toast:AlertService,
-  ){}
-  date = new Date(); 
-  collapsed = true
-  monthName!: string; // NOM DU COURANT MOIS OU SLECTIONNÉ EN MAJUSCULE
-  monthNames: any;
-  dayNum!: number
-  dayNames: any;
-  dayName!: string;
-  dayChoose!:any;
-  currentMonth: any; // NOM DU MOIS EN MAJUSCULE
-  currentDay:any ; //NUMERO DU JOUR DANS LE MOIS
-  currentHours:any; // HEURES AU FORMAT HH:MM
-  schedule: any;
-  scheduleKeys: string[] = [];
-  daySchedule:any;
-  monthNum = this.date.getMonth();//numero du mois à partir de 0 à 11
-  monthDays!: number // nombre de jour dans le mois choisi
-  monthDaysArray: any // nombre de jour dans le mois choisi
-  monthDaysName:any =  [];
-  passedDaysArray:any = []
-  closedDaysArray:any = []
-  blockedDaysArray:any = []
-  year = this.date.getFullYear();
-  monthsLong:any 
-  async ngOnInit() { 
-    await this.scheduleService.getAllBlocked().subscribe(blockDays=> {
-      this.blockDays = blockDays
-      for (const k in this.blockDays) {          
-        this.blockDays[k].date = new Date (this.blockDays[k].date.seconds * 1000) 
-        let blockYear = this.blockDays[k].date.getFullYear()
-        let blockMonth= this.blockDays[k].date.getMonth()+1
-        let blockDay= this.blockDays[k].date.getDate()
-        this.blockDays[k].dateFull = blockYear+' - '+blockMonth+' - '+blockDay
-        this.blockDays[k].id = blockYear+'_'+blockMonth+'_'+blockDay 
-      }     
-   });
-    this.monthNames = monthNames
-    this.dayNames = dayNames
-    this.monthName = this.monthNames[this.monthNum]
-    this.monthDays = this.daysInMonth(this.year,this.monthNum)
-    console.log(this.monthDays)
-    this.monthDaysArray = this.numSequence()
-    console.log(this.monthDaysArray)
-    this.monthsLong= monthLong;
-    const container_days:any = document.querySelector(".days_scroll");
-    const hammer1 = new Hammer(container_days, {
-      touchAction: 'pan-y',
-      domEvents: true,
-    });
-    hammer1.get('swipe').set({ direction: Hammer.DIRECTION_HORIZONTAL });
-    hammer1.on('swipe', (event: any) => {
-      if (event.direction === Hammer.DIRECTION_LEFT) {
-        // Scroller vers la gauche
-        container_days.scrollBy({
-          left: 200,
-          behavior: 'smooth'
-        });
-      } else if (event.direction === Hammer.DIRECTION_RIGHT) {
-        // Scroller vers la droite
-        container_days.scrollBy({
-          left: -200,
-          behavior: 'smooth'
-        });
-      }
-    });
-    this.dayName = 'lun'
-    this.scheduleService.getSchedule().subscribe((schedule) => {
-      this.schedule = schedule[0];
-      
-      this.scheduleKeys = Object.keys(this.schedule).sort((a, b) => {
-        return this.weekdays.indexOf(a) - this.weekdays.indexOf(b);
-      });
+    private catalogService: SalonCatalogService,
+    private _toast: AlertService
+  ) {}
 
-      // Parcourir chaque clé pour extraire le nom du jour et isBook correspondant
-      this.daysWithIsBook = this.scheduleKeys.map((day) => ({
-        dayName: day,
-        isBook: this.schedule[day][0]?.isBook, // Récupérer isBook correspondant au jour
-        reservationStatus: this.getReservationStatus(this.schedule[day][0]?.isBook,), // Déterminer le texte de réservation en fonction de isBook
-        reservationClass: this.schedule[day][0]?.isBook ? 'reserved' : 'not-reserved' // Définir la classe CSS en fonction de isBook
-      }));
-      this.setDays()
+  ngOnInit(): void {
+    this.leavesSub = this.scheduleService.getLeaves().subscribe({
+      next: (leaves) => {
+        this.leaves = leaves || [];
+      },
+      error: (err) => console.error(err)
     });
-  }
-  setReservationDay(day: any) {
-    // Supposons que 'day' soit l'objet représentant le jour sur lequel vous avez cliqué
-    day.isBook = !day.isBook; // Inverser la valeur de isBook (true devient false et vice versa)  
-    // Recalculer la classe de réservation en fonction de la nouvelle valeur de isBook
-    day.reservationClass = day.isBook ? 'reserved' : 'not-reserved';
-    day.reservationStatus = this.getReservationStatus(day.isBook )
-    this.scheduleService.updateReservationDay(day.dayName,'isBook',day.isBook)   
-  }
-  // Méthode pour déterminer le texte de réservation en fonction de isBook
-  getReservationStatus(isBook: boolean): string {
-    
-    return isBook ? 'Réservé' : 'Non réservé';
-  }
-  monthStatus:boolean = true
-  setCurrentMonth(event:Event) {
-    event.stopPropagation()
-    const target = event.target as HTMLTextAreaElement;
-    this.monthName = target.id; 
-    this.currentDay = ''
-    this.currentHours = ''
-    if(this.currentMonth != this.monthName){
-      this.currentMonth = this.monthName
-      this.monthNum = Number(this.monthsLong[this.monthName.toLowerCase()])
-      this.monthStatus = true
-      this.monthDays = this.daysInMonth(this.year,this.monthNum)
-      this.monthDaysArray = this.numSequence()    
-      console.log(this.monthDaysArray)
-      this.monthDaysName= []
-      this.passedDaysArray = []
-      this.closedDaysArray = []
-      this.blockedDaysArray = []
-      this.setDays()
-    }else{
-      this.monthStatus = !this.monthStatus
-    }
-  }
-  dayStatus:boolean = false
-  async setCurrentDay(event:Event,i:number) {
-    event.stopPropagation()
-    this.currentHours = ''
-    var firstDate = new Date(this.year, this.monthNum, i+1);
-    firstDate.setDate( firstDate.getDate() ); 
-    // set days names
-    this.dayNum = firstDate.getDay() 
-    const target = event.target as HTMLTextAreaElement;
-    this.dayChoose = Number(target.id);
-    this.dayName = this.dayNames[this.dayNum]     
-      this.daySchedule = this.schedule[this.dayName]
-      if(this.currentDay != this.dayChoose){ 
-        this.currentDay = this.dayChoose
-        this.dayStatus = true
-        this.scheduleService.addBlockDay(firstDate)
-      }else{
-        this.scheduleService.removeBlockDay(firstDate)
-        this.currentDay = ''
-        this.dayStatus = !this.dayStatus
-      }
-  } 
-  close_block_day(id: any){
-    id = id.replace('remove_block_day','')
-    id = id.split('_')
-    var removeDate = new Date(id[0], id[1] - 1, id[2]);
-    this.scheduleService.removeBlockDay(removeDate)
-  }
-  daysInMonth (year:number,month:number) {
-    //retourne le nombre de jours dans le mois
-    month = month +1
-    return new Date(year,month, 0).getDate();
 
-  }
-  hoursSequence(): Array<number> {
-    return Array(24);
-  }
-  getScheduleHours(){
-    if (this.schedule) {
-      return this.schedule
-    }
-  }
+    this.prestationsSub = this.catalogService.getPrestations().subscribe({
+      next: (list) => {
+        this.prestations = list.map((p) => ({ ...p }));
+      },
+      error: (err) => console.error(err)
+    });
 
-  setDays(){  
-    var daySchedule
-    for (let i = 1; i <= this.monthDaysArray.length; i++) {
-      var firstDate = new Date(this.year, this.monthNum, i);
-      firstDate.setDate( firstDate.getDate() ); 
-      this.date.setHours(0, 0,0);
-      firstDate.setHours(23,59,0)
-      // set days names
-      this.dayNum = firstDate.getDay()    
-      this.dayName = this.dayNames[this.dayNum];
-      // heure d'ouverture de chaque jour du mois       
-      daySchedule = this.schedule[this.dayName]
-      this.monthDaysName.push(this.dayName.slice(0, 3));
-      // set passed days
-      if(firstDate < this.date){
-        this.passedDaysArray.push(true)
-      }else{
-        this.passedDaysArray.push(false)
-      } 
-      /*set closed days*/ 
-      if(daySchedule[0].start1.length == 0 && 
-        daySchedule[0].start2.length == 0 && 
-        daySchedule[0].end1.length == 0 && 
-        daySchedule[0].end2.length == 0 
-        ){
-        this.closedDaysArray.push(false)
-      }else{
-        this.closedDaysArray.push(true)
-      }
-      /*set blocked day*/
-      let found = false;
-      for (let i = 0; i < this.blockDays.length; i++) {
-        this.blockDays[i].date.setHours(23,59,0)        
-        if (this.blockDays[i].date.getTime() === firstDate.getTime()) {
-          found = true;
-          break;
+    this.scheduleSub = this.scheduleService.getSchedule().subscribe({
+      next: (schedules: any[]) => {
+        this.isLoading = false;
+        const first = schedules?.[0];
+        if (!first) {
+          this.schedule = null;
+          this.scheduleKeys = [];
+          this.daysWithIsBook = [];
+          return;
         }
-      }     
+        this.schedule = first;
+        this.scheduleKeys = Object.keys(this.schedule)
+          .filter((k) => this.weekdays.includes(k))
+          .sort((a, b) => this.weekdays.indexOf(a) - this.weekdays.indexOf(b));
 
-    }
-  }
-  
-  /*
-num sequence : set number in month into à array [1,2,3,...]
-*/
-numSequence() {
-  let arr = [];
-  for (let i = 1; i <= this.monthDays; i++) {
-    arr.push(i);
-  }
-  return arr;
-}
-  toggle() {
-    this.collapsed = !this.collapsed; 
-  }
-  expand() {
-    this.collapsed = false;
-  }
-  collapse() {
-    this.collapsed = true;
-  }
-  /*set horaires*/
-  toggleLock(id:any) {  
-    var hoursInput = document.getElementById('hours_'+id) as HTMLInputElement;
-    var minutesInput = document.getElementById('minutes_'+id) as HTMLInputElement;
-    const blockedImg = document.getElementById('block_img_'+id) as HTMLImageElement;
-    const hours = hoursInput.value;
-    const minutes = minutesInput.value; 
-    if (hours === "" && minutes === "") {
-      hoursInput.value = '00';
-      minutesInput.value = '00';
-      hoursInput.disabled = false
-      minutesInput.disabled = false
-      hoursInput.style.border = "1px solid rgba(255, 255, 255, 1)";
-      minutesInput.style.border = "1px solid rgba(255, 255, 255, 1)";
-      blockedImg.src = 'assets/BLOCKED.svg';
-    }else{
-      hoursInput.value = "";
-      minutesInput.value = "";
-      hoursInput.disabled = true
-      minutesInput.disabled = true
-      hoursInput.style.border = "1px solid rgba(255, 255, 255, 0.4)";
-      minutesInput.style.border = "1px solid rgba(255, 255, 255, 0.4)";
-      blockedImg.src = 'assets/BLOCKED_RED.svg';
-    }
-    this.setSchedule(id);
-  }
-  setSchedule(id:any){
-    const day = id.split("_")[2]
-    
-    const key = id.split("_")[1]
-    var setValue
-    var hoursInput = document.getElementById('hours_'+id) as HTMLInputElement;
-    var minutesInput = document.getElementById('minutes_'+id) as HTMLInputElement;
-    const hours = hoursInput.value;
-    const minutes = minutesInput.value;
-    if (hours === "" && minutes === "") {
-      setValue = ""
-    }else{
-      setValue = ''+hoursInput.value+':'+minutesInput.value+''
-      const regex = /^(0?[0-9]|[1-5][0-9]|59)$/;
-      if (!regex.test(hours)) {
-        hoursInput.value = '00';
-        this._toast.showWarning('INVALIDE','les heures du '+day+' sont invalides')
-        return false;
+        this.daysWithIsBook = this.scheduleKeys.map((day) => ({
+          dayName: day,
+          isBook: Boolean(this.schedule[day]?.[0]?.isBook)
+        }));
+      },
+      error: () => {
+        this.isLoading = false;
       }
-      if (!regex.test(minutes)) {
-        this._toast.showWarning('INVALIDE','les minutes du '+day+' sont invalides')
-        minutesInput.value = '00';
-        return false;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.leavesSub?.unsubscribe();
+    this.scheduleSub?.unsubscribe();
+    this.prestationsSub?.unsubscribe();
+  }
+
+  async initDefaultSchedule(): Promise<void> {
+    if (this.initializing) return;
+    this.initializing = true;
+    try {
+      await this.scheduleService.ensureScheduleDoc();
+      this._toast.showSucces('HORAIRES', 'Horaires par défaut créés');
+    } catch (error) {
+      console.error(error);
+      this._toast.showError('ERREUR', "Impossible de créer les horaires par défaut");
+    } finally {
+      this.initializing = false;
+    }
+  }
+
+  async setReservationDay(day: { dayName: string; isBook: boolean }): Promise<void> {
+    const nextState = !day.isBook;
+    try {
+      await this.scheduleService.setDayOpen(day.dayName, nextState);
+      day.isBook = nextState;
+      this._toast.showSucces(
+        'HORAIRES',
+        nextState ? `RDV ouverts le ${day.dayName}` : `RDV fermés le ${day.dayName}`
+      );
+    } catch (error: any) {
+      if (error instanceof ScheduleValidationError) {
+        this._toast.showWarning('HORAIRES', error.errors[0]);
+      } else {
+        console.error(error);
+        this._toast.showError('ERREUR', 'Mise à jour impossible');
       }
     }
-    this._toast.showSucces('CONFIRMATION','Les horaires du '+day+' ont bien été validés')
-    this.scheduleService.updateSchedule(day,key,setValue)    
+  }
+
+  async addLeavePeriod(): Promise<void> {
+    if (this.savingLeave) return;
+    if (!this.leaveStart) {
+      this._toast.showWarning('DATE REQUISE', 'Choisissez au moins une date de début');
+      return;
+    }
+    const startKey = this.leaveStart;
+    const endKey = this.leaveEnd || this.leaveStart;
+
+    this.savingLeave = true;
+    try {
+      // Vérifie s'il existe déjà des RDV clients sur cette période pour avertir l'admin
+      const existingRdvs = await this.scheduleService.getAppointmentsBetween(startKey, endKey);
+      if (existingRdvs.length > 0) {
+        const proceed = window.confirm(
+          `Attention : ${existingRdvs.length} rendez-vous client(s) existent déjà sur cette période. Ils ne seront pas annulés automatiquement. Bloquer quand même ces dates ?`
+        );
+        if (!proceed) {
+          return;
+        }
+      }
+
+      await this.scheduleService.addLeave(startKey, endKey, this.leaveLabel);
+      this.leaveStart = '';
+      this.leaveEnd = '';
+      this.leaveLabel = '';
+      this._toast.showSucces('CONGÉ ENREGISTRÉ', 'La période est bloquée à la réservation');
+    } catch (error: any) {
+      if (error instanceof ScheduleValidationError) {
+        this._toast.showWarning('DATE INVALIDE', error.errors[0]);
+      } else {
+        console.error(error);
+        this._toast.showError('ERREUR', "Impossible d'enregistrer ce congé");
+      }
+    } finally {
+      this.savingLeave = false;
+    }
+  }
+
+  async removeLeave(leave: Leave): Promise<void> {
+    try {
+      await this.scheduleService.removeLeave(leave.id);
+      this._toast.showSucces('PÉRIODE DÉBLOQUÉE', 'Les dates sont à nouveau ouvertes');
+    } catch (error) {
+      console.error(error);
+      this._toast.showError('ERREUR', 'Impossible de supprimer cette période');
+    }
+  }
+
+  formatLeaveRange(leave: Leave): string {
+    const fmt = (d: Date) =>
+      d.toLocaleDateString('fr-BE', { day: '2-digit', month: 'short', year: 'numeric' });
+    if (leave.startKey === leave.endKey) {
+      return fmt(leave.start);
+    }
+    return `${fmt(leave.start)} → ${fmt(leave.end)} (${leave.days} j)`;
+  }
+
+  async onTimeChange(day: string, key: 'start1' | 'end1' | 'start2' | 'end2', value: string): Promise<void> {
+    const clean = (value || '').trim();
+    try {
+      await this.scheduleService.saveDayHours(day, { [key]: clean });
+      this._toast.showSucces('HORAIRES', `Horaires du ${day} mis à jour`);
+    } catch (error: any) {
+      if (error instanceof ScheduleValidationError) {
+        this._toast.showWarning('HORAIRE INVALIDE', error.errors[0]);
+      } else {
+        console.error(error);
+        this._toast.showError('ERREUR', 'Mise à jour impossible');
+      }
+    }
+  }
+
+  async toggleHalfDay(day: string, part: 'morning' | 'afternoon'): Promise<void> {
+    const slot = this.schedule?.[day]?.[0];
+    if (!slot) return;
+
+    const startKey = part === 'morning' ? 'start1' : 'start2';
+    const endKey = part === 'morning' ? 'end1' : 'end2';
+    const isCurrentlyOpen = Boolean(slot[startKey] || slot[endKey]);
+
+    try {
+      await this.scheduleService.setHalfDay(day, part, isCurrentlyOpen ? null : undefined);
+      this._toast.showSucces(
+        'HORAIRES',
+        `${part === 'morning' ? 'Matin' : 'Après-midi'} ${isCurrentlyOpen ? 'fermé' : 'ouvert'} le ${day}`
+      );
+    } catch (error: any) {
+      if (error instanceof ScheduleValidationError) {
+        this._toast.showWarning('HORAIRES', error.errors[0]);
+      } else {
+        console.error(error);
+        this._toast.showError('ERREUR', 'Modification impossible');
+      }
+    }
+  }
+
+  async copyToWeekdays(day: string): Promise<void> {
+    if (this.copyingDay) return;
+    this.copyingDay = day;
+    try {
+      await this.scheduleService.copyDayHours(day, ['mardi', 'mercredi', 'jeudi', 'vendredi']);
+      this._toast.showSucces('HORAIRES COPIÉS', `Horaires du ${day} appliqués du mardi au vendredi`);
+    } catch (error: any) {
+      if (error instanceof ScheduleValidationError) {
+        this._toast.showWarning('HORAIRES', error.errors[0]);
+      } else {
+        console.error(error);
+        this._toast.showError('ERREUR', 'Copie impossible');
+      }
+    } finally {
+      this.copyingDay = null;
+    }
+  }
+
+  async resetDefaultSchedule(): Promise<void> {
+    if (this.resetting) return;
+    const confirmed = window.confirm(
+      'Réinitialiser tous les horaires de la semaine aux valeurs par défaut (mardi–vendredi 09h–12h / 13h–18h, samedi 09h–16h) ? Vos tarifs et annonces seront conservés.'
+    );
+    if (!confirmed) return;
+
+    this.resetting = true;
+    try {
+      await this.scheduleService.resetSchedule();
+      this._toast.showSucces('HORAIRES RÉINITIALISÉS', 'Semaine type restaurée');
+    } catch (error) {
+      console.error(error);
+      this._toast.showError('ERREUR', 'Réinitialisation impossible');
+    } finally {
+      this.resetting = false;
+    }
+  }
+
+  addPrestationRow(): void {
+    const nextId = this.prestations.reduce((max, p) => Math.max(max, p.id || 0), 0) + 1;
+    this.prestations.push({ id: nextId, name: '', durationMin: 20, price: '' });
+  }
+
+  removePrestationRow(index: number): void {
+    if (this.prestations.length <= 1) {
+      this._toast.showWarning('PRESTATIONS', 'Gardez au moins une prestation active');
+      return;
+    }
+    this.prestations.splice(index, 1);
+  }
+
+  async savePrestations(): Promise<void> {
+    if (this.savingPrestations) return;
+    const valid = this.prestations.filter((p) => p.name && p.name.trim().length > 0);
+    if (valid.length === 0) {
+      this._toast.showWarning('PRESTATIONS', 'Renseignez au moins un nom de prestation');
+      return;
+    }
+
+    this.savingPrestations = true;
+    try {
+      await this.catalogService.savePrestations(valid);
+      this._toast.showSucces('TARIFS ENREGISTRÉS', 'La carte des prestations est à jour');
+    } catch (error) {
+      console.error(error);
+      this._toast.showError('ERREUR', "Impossible d'enregistrer les prestations");
+    } finally {
+      this.savingPrestations = false;
+    }
+  }
+
+  trackByIndex(index: number): number {
+    return index;
   }
 }

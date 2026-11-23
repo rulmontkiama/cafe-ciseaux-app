@@ -3,6 +3,7 @@ import { AlertService } from 'src/app/services/alert.service';
 import {FormBuilder, Validators,FormGroup } from '@angular/forms';
 import { CustomvalidationService } from 'src/app/services/custom-validation.service';
 import { AuthenticationService } from 'src/app/services/authentication.service';
+import { environment } from 'src/environments/environment';
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
@@ -11,6 +12,8 @@ import { AuthenticationService } from 'src/app/services/authentication.service';
 export class LoginComponent implements OnInit {
   errorMessage: any
   submitted:any;
+  socialLoading = false;
+  readonly showDemoLogin = Boolean(environment.demo?.email);
   constructor(
     private _toast:AlertService,
     public formBuilder: FormBuilder,
@@ -32,16 +35,40 @@ export class LoginComponent implements OnInit {
   get password() {
     return this.loginForm.get('password');
   }
-  // Connexion avec Google ou Apple
-  async socialLogin(provider: 'google' | 'apple') {
+  // Connexion avec Google
+  async googleLogin() {
+    if (this.socialLoading) return;
+    this.socialLoading = true;
     try {
-      await this.authService.loginWithProvider(provider);
-      this._toast.showSucces('LOGIN','vous êtes connecté')
+      const ok = await this.authService.loginWithGoogle();
+      if (ok) {
+        this._toast.showSucces('LOGIN','vous êtes connecté');
+      }
     } catch (error) {
       const message = this.authService.socialLoginErrorMessage(error);
       if (message) {
         this._toast.showError('CONNEXION', message);
       }
+    } finally {
+      this.socialLoading = false;
+    }
+  }
+  // Connexion avec Apple
+  async appleLogin() {
+    if (this.socialLoading) return;
+    this.socialLoading = true;
+    try {
+      const ok = await this.authService.loginWithApple();
+      if (ok) {
+        this._toast.showSucces('LOGIN','vous êtes connecté');
+      }
+    } catch (error) {
+      const message = this.authService.socialLoginErrorMessage(error);
+      if (message) {
+        this._toast.showError('CONNEXION', message);
+      }
+    } finally {
+      this.socialLoading = false;
     }
   }
   onSubmit() {

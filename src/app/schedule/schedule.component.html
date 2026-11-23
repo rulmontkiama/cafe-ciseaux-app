@@ -1,21 +1,170 @@
-<div class="day_schedule_block">
-<div class="day_schedule" *ngFor="let day of days">
-    <div class="dayname_schedule">{{ day[0] }}</div>
-    <div *ngIf="day[1][0].start1.length > 0">
-        <div class="schedule_split">
-            <span>{{day[1][0].start1}}</span>-
-            <span>{{day[1][0].end1}}</span>
-        </div>
-        <div class="schedule_split" *ngIf="day[1][0].start2.length > 0">
-            <span>{{day[1][0].start2}}</span>-
-            <span>{{day[1][0].end2}}</span>
-        </div>
+<div class="schedule-modal" (click)="$event.stopPropagation()">
+  <div class="sheet-handle" aria-hidden="true"></div>
+
+  <!-- EN-TÊTE FIXE -->
+  <div class="schedule-top">
+    <div class="top-title-wrap">
+      <span class="cut_angle">
+        <h2>HORAIRES &amp; INFOS.</h2>
+      </span>
+      <span class="top-subtitle">Café Ciseaux · Malmedy</span>
     </div>
-    <div class="sunday" *ngIf="  day[1][0].start1.length <= 0">
-        <span >fermé</span>
+    <button type="button" class="modal-close-btn" (click)="closeModal()" aria-label="Fermer">✕</button>
+  </div>
+
+  <!-- CORPS DÉFILABLE -->
+  <div class="schedule-scroll">
+    <!-- BANDEAU STATUT EN DIRECT MIS EN VALEUR -->
+    <div *ngIf="!isLoading" class="live-status-hero" [class.is-open]="isOpenToday" [class.is-closed]="!isOpenToday">
+      <div class="status-hero-top">
+        <span class="status-badge-pill">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>{{ isOpenToday ? 'OUVERT EN CE MOMENT' : "FERMÉ AUJOURD'HUI" }}</span>
+        </span>
+      </div>
+      <strong class="status-hero-headline">
+        {{ isOpenToday ? todaySummary : "Le salon est fermé aujourd'hui" }}
+      </strong>
+      <span *ngIf="nextOpenHint" class="status-hero-next">
+        {{ nextOpenHint }}
+      </span>
+      <span *ngIf="isOpenToday" class="status-hero-next">
+        Réservation en ligne disponible pour les prochains créneaux
+      </span>
     </div>
+
+    <!-- ESPACE COMMUNICATION DU SALON (TOUJOURS VISIBLE) -->
+    <section class="schedule-section" aria-label="Espace communication du salon">
+      <div class="section-head">
+        <h3 class="section-eyebrow">ESPACE COMMUNICATION</h3>
+        <span *ngIf="hasActiveCommunication && communicationDateLabel" class="section-meta">
+          Mis à jour le {{ communicationDateLabel }}
+        </span>
+        <span *ngIf="!hasActiveCommunication" class="section-meta">En direct du salon</span>
+      </div>
+
+      <div class="salon-comm-box" [class.has-announcement]="hasActiveCommunication">
+        <ng-container *ngIf="hasActiveCommunication; else noAnnouncement">
+          <div class="comm-top">
+            <span class="comm-badge">{{ communication.badge }}</span>
+            <span class="comm-eyebrow">ANNONCE DU SALON</span>
+          </div>
+          <h4 *ngIf="communication.title" class="comm-title">{{ communication.title }}</h4>
+          <p *ngIf="communication.message" class="comm-body">{{ communication.message }}</p>
+        </ng-container>
+
+        <ng-template #noAnnouncement>
+          <div class="comm-top">
+            <span class="comm-badge is-neutral">INFO</span>
+            <span class="comm-eyebrow">LE MOT DE FITIM</span>
+          </div>
+          <p class="comm-body">
+            Aucune fermeture exceptionnelle annoncée : le salon vous accueille aux horaires habituels. Une question sur votre coupe ou votre RDV ?
+          </p>
+        </ng-template>
+
+        <div class="comm-quick-links">
+          <button type="button" class="comm-btn is-primary" (click)="goToMessages()">
+            Écrire au salon →
+          </button>
+          <a class="comm-btn" [href]="phoneHref">
+            Appeler
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- GRILLE DES HORAIRES -->
+    <section class="schedule-section">
+      <div class="section-head">
+        <h3 class="section-eyebrow">HORAIRES D'OUVERTURE</h3>
+        <span class="section-meta">Sur rendez-vous</span>
+      </div>
+
+      <p *ngIf="isLoading" class="schedule-loading">Chargement des horaires…</p>
+
+      <ul *ngIf="!isLoading" class="week-list">
+        <li *ngFor="let row of days" class="day_schedule" [class.is-today]="row.isToday" [class.is-closed]="!row.isOpen">
+          <div class="dayname_wrap">
+            <span class="day-indicator" aria-hidden="true"></span>
+            <span class="dayname_schedule">{{ row.day }}</span>
+            <span *ngIf="row.isToday" class="today_badge">Auj.</span>
+          </div>
+
+          <div *ngIf="row.isOpen" class="day_hours">
+            <span class="time-pill" *ngIf="row.hours.start1 && row.hours.end1">
+              {{ row.hours.start1 }} – {{ row.hours.end1 }}
+            </span>
+            <span class="time-pill" *ngIf="row.hours.start2 && row.hours.end2">
+              {{ row.hours.start2 }} – {{ row.hours.end2 }}
+            </span>
+          </div>
+
+          <span *ngIf="!row.isOpen" class="closed_pill">Fermé</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- PRESTATIONS & TARIFS -->
+    <section class="schedule-section">
+      <div class="section-head">
+        <h3 class="section-eyebrow">PRESTATIONS &amp; TARIFS</h3>
+        <span class="section-meta">{{ prestations.length }} soins</span>
+      </div>
+
+      <ul class="services-price-list">
+        <li *ngFor="let p of prestations" class="service-price-row" (click)="goToBooking()">
+          <div class="sp-left">
+            <span class="sp-name">{{ p.name }}</span>
+            <span *ngIf="p.durationMin" class="sp-dur">~{{ p.durationMin }} min</span>
+          </div>
+          <strong *ngIf="p.price" class="sp-price">{{ p.price }}</strong>
+        </li>
+      </ul>
+
+      <div class="duration-disclaimer" role="note">
+        <div class="disclaimer-head">
+          <span class="disclaimer-icon" aria-hidden="true">⏱</span>
+          <span class="disclaimer-title">À SAVOIR · DURÉE INDICATIVE</span>
+        </div>
+        <p>
+          Les créneaux sont estimés à <strong>20 min</strong>, mais le temps réel peut varier selon le type de cheveux, la prestation demandée et le rythme du salon. Merci d'avance pour votre compréhension et votre patience !
+        </p>
+      </div>
+    </section>
+
+    <!-- INFOS PRATIQUES -->
+    <section class="schedule-section">
+      <div class="section-head">
+        <h3 class="section-eyebrow">ACCÈS &amp; CONTACT</h3>
+      </div>
+
+      <div class="info-grid">
+        <a class="info-tile" [href]="mapsUrl" target="_blank" rel="noopener noreferrer">
+          <span class="tile-kicker">ADRESSE</span>
+          <strong class="tile-val">Rle Grognet 8<br>4960 Malmedy</strong>
+          <span class="tile-action">Itinéraire Maps ↗</span>
+        </a>
+
+        <a class="info-tile" [href]="phoneHref">
+          <span class="tile-kicker">TÉLÉPHONE</span>
+          <strong class="tile-val">{{ contact?.phone_n?.trim() || '0497 99 12 26' }}</strong>
+          <span class="tile-action">Appeler le salon →</span>
+        </a>
+      </div>
+
+      <div class="bar-highlight-strip">
+        <span class="bar-dot" aria-hidden="true">◆</span>
+        <span><strong>Espace Bar &amp; Café :</strong> sélection de bières spéciales belges et café pour patienter en détente.</span>
+      </div>
+    </section>
+  </div>
+
+  <!-- PIED FIXE AVEC CTA -->
+  <div class="schedule-footer-cta">
+    <button type="button" class="book-cta" (click)="goToBooking()">
+      <span>PRENDRE RENDEZ-VOUS</span>
+      <span aria-hidden="true">→</span>
+    </button>
   </div>
 </div>
-  
-  
-  

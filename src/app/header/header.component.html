@@ -1,45 +1,32 @@
-<header >   
+<header>
   <div id="headerCenter">
     <div id="logo_side_left" class="logo_side_left">
-      <a routerLink="cafeCiseaux" routerLinkActive="active">
-        <img class="logo" src="assets/LOGO_CC_WHITE.svg" alt="cafe_ciseaux_logo">
+      <a routerLink="cafeCiseaux" routerLinkActive="active" aria-label="Accueil Café Ciseaux">
+        <img class="logo" src="assets/LOGO_CC_WHITE.svg" alt="Café Ciseaux">
       </a>
     </div>
-    <div  id="user_side_center" class="user_side_center">
-      <div id="user_block" class="user_block">
-        <div id="user_block_left" class="user_block_left">
-          <span id="user_frame" class="user_frame" >
-            <img src="{{avatar}}" *ngIf = 'isUserLoggedIn'  [routerLink] = "['profile']" routerLinkActive = "active"   src="assets/AVATAR.svg" />
-            <img *ngIf = '!isUserLoggedIn'  src="assets/AVATAR_BLANK.svg" />
-          </span>
+    <div id="user_side_center" class="user_side_center">
+      <div *ngIf="isUserLoggedIn" id="user_block" class="user_block">
+        <div id="user_block_right" class="user_block_right">
+          <a class="header-chip" [routerLink]="['user-message']" routerLinkActive="is-active" [class.has-unread]="msgCount > 0" title="Messages">
+            <img src="assets/MSG.svg" alt="Messages">
+            <span>{{ msgCount }}</span>
+          </a>
+          <a *ngIf="isAdmin()" class="header-admin-pill" [routerLink]="['admin']" routerLinkActive="is-active" title="Espace administration">
+            <img src="assets/PARAM_WHEEL.svg" alt="">
+            <span>ADMIN</span>
+          </a>
         </div>
-        <span *ngIf = 'isUserLoggedIn' id="user_name" class="user_name" >
-          <p>{{nom | uppercase }}<br>{{prenom | uppercase }}</p>
-        </span>
-        <div *ngIf = 'isUserLoggedIn' id="user_block_right" class="user_block_right" >
-          <span class="block_unit" id="calendar">
-            <img class="calendar_icon" src="assets/CALENDAR.svg" alt="calendar_icon">
-            <span class="text_block"><h1>{{notifCount}}</h1></span>
-          </span>
-          <span class="block_unit" id="messages">
-            <img class="messages_icon" src="assets/MSG.svg"  [routerLink] = "['user-message']" alt="calendar_icon">
-            <span class="text_block"><h1>{{msgCount}}</h1></span>
-          </span>
-          <span class="block_unit" id="scissors" class="scissors">
-            <img class="calendar_icon" src="assets/SCISSOR.svg" alt="calendar_icon">
-            <span class="text_block"><h1>{{scissor}}</h1></span>
-          </span>
-          <span class="admin_bttn"  *ngIf = 'isAdmin()'  [routerLink] = "['admin']" routerLinkActive = "active">
-            <img  class="scissor_black" src="assets/PARAM_WHEEL.svg">
-          </span> 
-        </div>
+
+        <a id="user_frame" class="user_frame" [routerLink]="['profile']" routerLinkActive="is-active" title="Mon profil">
+          <img [src]="avatar || 'assets/AVATAR.svg'" alt="Mon profil" />
+        </a>
       </div>
-      <div  [routerLink] = "['login']" routerLinkActive = "active" class="login_side_center" *ngIf = '!isUserLoggedIn'>
-        <span class="login_text">
-          <a class="login_link" >LOGIN</a>
-        </span>
-        <img class="logo" src="assets/LOGIN.svg" alt="cafe_ciseaux_logo">
-      </div>
-    </div> 
+
+      <a *ngIf="!isUserLoggedIn" [routerLink]="['login']" routerLinkActive="active" class="login-cta">
+        <span>CONNEXION</span>
+        <img src="assets/LOGIN.svg" alt="">
+      </a>
+    </div>
   </div>
-  </header>
+</header>

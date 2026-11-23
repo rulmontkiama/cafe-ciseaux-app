@@ -4,7 +4,7 @@
   "type": "module",
   "description": "Tests des règles Firestore et Storage avec l'émulateur Firebase",
   "scripts": {
-    "test": "firebase emulators:exec --config ../firebase.json --only firestore,storage --project demo-cafe-ciseaux \"node --test --test-concurrency=1\""
+    "test": "firebase emulators:exec --config ../firebase.tests.json --only firestore,storage --project demo-cafe-ciseaux \"node --test --test-concurrency=1\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^3.0.4",

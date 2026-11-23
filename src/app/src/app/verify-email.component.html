@@ -1,21 +1,25 @@
-<div class="displayTable">
-    <div class="displayTableCell">
-      <div class="authBlock">
-        <h3 class="cut_angle">Thank You for Registering</h3>
-        <div class="formGroup" *ngIf="authService.userData as user">
-          <p class="text-center">We have sent a confirmation email to <strong>{{user.email}}</strong>.</p>
-          <p class="text-center">Please check your email and click on the link to verfiy your email address.</p>
-        </div>        
-        <!-- Calling SendVerificationMail() method using authService Api -->
-        <div class="formGroup">
-          <button type="button" class="  bttn_cyber" (click)="authService.SendVerificationMail()">
-            <i class="fas fa-redo-alt"></i>
-            Resend Verification Email
-          </button>
-        </div>
+<div class="verify-container">
+  <div class="verify-card">
+    <span class="cut_angle">
+      <h2>BIENVENUE.</h2>
+    </span>
+
+    <div class="verify-body" *ngIf="authService.userData as user; else fallbackText">
+      <p>Votre compte a bien été créé. Un e-mail de confirmation a été envoyé à <strong>{{ user.email }}</strong>.</p>
+      <p class="verify-hint">Pensez à vérifier vos courriers indésirables si vous ne le voyez pas dans quelques minutes.</p>
+    </div>
+    <ng-template #fallbackText>
+      <div class="verify-body">
+        <p>Votre compte a bien été créé. Un e-mail de confirmation vient de vous être envoyé.</p>
       </div>
-      <div class="redirectToLogin">
-        <span>Go back to?<span class="redirect" [routerLink] = "['/login']" routerLinkActive = "active"> LOGIN</span></span>
-      </div>
+    </ng-template>
+
+    <div class="verify-actions">
+      <a class="verify-primary" [routerLink]="['/rendez-vous']">PRENDRE RENDEZ-VOUS</a>
+      <a class="verify-secondary" [routerLink]="['/profile']">MON PROFIL</a>
+      <button type="button" class="verify-resend" [disabled]="resending" (click)="resendEmail()">
+        {{ resending ? 'ENVOI EN COURS…' : "RENVOYER L'E-MAIL DE CONFIRMATION" }}
+      </button>
     </div>
   </div>
+</div>

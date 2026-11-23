@@ -1,0 +1,165 @@
+<div class="overview-wrap">
+  <!-- EN-TÊTE -->
+  <section class="overview-hero">
+    <div class="hero-top">
+      <span class="cut_angle">
+        <h2>TABLEAU DE BORD.</h2>
+      </span>
+      <span class="status-pill" [class.is-open]="isOpenToday">
+        <span class="dot" aria-hidden="true"></span>
+        <span>{{ todayStatusText }}</span>
+      </span>
+    </div>
+    <p class="hero-date">Bonjour <strong>{{ adminName | titlecase }}</strong> · {{ todayLabel }}</p>
+  </section>
+
+  <!-- ALERTE SI HORAIRES NON INITIALISÉS -->
+  <section *ngIf="!hasScheduleDoc" class="setup-banner">
+    <div>
+      <h3>Horaires du salon non initialisés</h3>
+      <p>Créez les horaires de base en un clic pour activer la prise de rendez-vous et l'affichage public.</p>
+    </div>
+    <button type="button" class="init-btn" [disabled]="initializingSchedule" (click)="initDefaultSchedule()">
+      {{ initializingSchedule ? 'INITIALISATION…' : 'INITIALISER LES HORAIRES' }}
+    </button>
+  </section>
+
+  <!-- KPIs DU SALON -->
+  <section class="kpi-grid">
+    <a class="kpi-card" [routerLink]="['/admin', 'admin-rendez-vous']">
+      <span class="kpi-val">{{ todayAppointments.length }}</span>
+      <span class="kpi-label">RDV aujourd'hui</span>
+    </a>
+    <a class="kpi-card" [routerLink]="['/admin', 'appointment-manager']">
+      <span class="kpi-val">{{ monthRdvCount }}</span>
+      <span class="kpi-label">RDV ce mois</span>
+    </a>
+    <a class="kpi-card" [class.has-alert]="unreadMessages > 0" [routerLink]="['/admin', 'admin-message']">
+      <span class="kpi-val">{{ unreadMessages }}</span>
+      <span class="kpi-label">Messages non lus</span>
+    </a>
+    <a class="kpi-card" [routerLink]="['/admin', 'admin-beers']">
+      <span class="kpi-val">{{ beersCount }}</span>
+      <span class="kpi-label">Bières en carte</span>
+    </a>
+  </section>
+
+  <!-- AGENDA DU JOUR -->
+  <section class="panel-card">
+    <div class="panel-head">
+      <h3>RENDEZ-VOUS DU JOUR</h3>
+      <div class="head-links">
+        <a class="panel-link is-accent" [routerLink]="['/admin', 'admin-rendez-vous']" [queryParams]="{ new: 1 }">+ Nouveau RDV</a>
+        <a class="panel-link" [routerLink]="['/admin', 'admin-rendez-vous']">Agenda →</a>
+      </div>
+    </div>
+
+    <p *ngIf="loadingRdv" class="panel-empty">Chargement de la journée…</p>
+    <p *ngIf="!loadingRdv && todayAppointments.length === 0" class="panel-empty">
+      Aucun rendez-vous prévu aujourd'hui.
+    </p>
+
+    <ul *ngIf="!loadingRdv && todayAppointments.length > 0" class="today-list">
+      <li *ngFor="let rdv of todayAppointments" class="today-row" [class.is-passed]="rdv.passed">
+        <span class="today-hour">{{ rdv.hours }}</span>
+        <div class="today-meta">
+          <strong>{{ rdv.prenom | uppercase }} {{ rdv.nom | uppercase }}</strong>
+          <span>{{ rdv.type | uppercase }}</span>
+          <a *ngIf="rdv.phone" class="today-phone" [href]="'tel:' + rdv.phone">T. {{ rdv.phone }}</a>
+        </div>
+        <span class="today-state">{{ rdv.passed ? 'Passé' : 'À venir' }}</span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- ZONE COMMUNICATION / ANNONCE PUBLIQUE DU SALON -->
+  <section class="panel-card comm-panel">
+    <div class="panel-head">
+      <div>
+        <h3>COMMUNICATION DU SALON</h3>
+        <span class="panel-sub">Affichée publiquement sur l'accueil et la page Horaires (visible même sans compte).</span>
+      </div>
+      <label class="switch-label">
+        <input type="checkbox" [(ngModel)]="comm.active">
+        <span>{{ comm.active ? 'Visible' : 'Masquée' }}</span>
+      </label>
+    </div>
+
+    <div class="badge-row">
+      <button
+        *ngFor="let b of badges"
+        type="button"
+        class="badge-choice"
+        [class.is-selected]="comm.badge === b"
+        (click)="comm.badge = b">
+        {{ b }}
+      </button>
+    </div>
+
+    <div class="comm-fields">
+      <div class="field-group">
+        <label for="commTitle">TITRE DE L'ANNONCE</label>
+        <input
+          id="commTitle"
+          type="text"
+          maxlength="80"
+          placeholder="Ex. Fermeture exceptionnelle jeudi matin"
+          [(ngModel)]="comm.title">
+      </div>
+      <div class="field-group">
+        <label for="commMessage">MESSAGE</label>
+        <textarea
+          id="commMessage"
+          rows="3"
+          maxlength="500"
+          placeholder="Écrivez ici une information utile pour vos clients (congés, nouvelle bière pression, événement…)"
+          [(ngModel)]="comm.message">
+        </textarea>
+      </div>
+    </div>
+
+    <!-- Aperçu en direct -->
+    <div *ngIf="comm.title || comm.message" class="comm-preview">
+      <span class="preview-caption">APERÇU CLIENT</span>
+      <div class="preview-box">
+        <span class="preview-badge">{{ comm.badge }}</span>
+        <strong *ngIf="comm.title">{{ comm.title }}</strong>
+        <p *ngIf="comm.message">{{ comm.message }}</p>
+      </div>
+    </div>
+
+    <div class="comm-actions">
+      <button type="button" class="save-comm-btn" [disabled]="savingComm" (click)="saveCommunication()">
+        {{ savingComm ? 'ENREGISTREMENT…' : 'PUBLIER / ENREGISTRER' }}
+      </button>
+      <button
+        *ngIf="comm.active || comm.title || comm.message"
+        type="button"
+        class="clear-comm-btn"
+        [disabled]="savingComm"
+        (click)="clearCommunication()">
+        Effacer
+      </button>
+    </div>
+  </section>
+
+  <!-- RACCOURCIS COMPLETS -->
+  <section class="shortcuts-grid">
+    <a class="shortcut-card" [routerLink]="['/admin', 'admin-schedule']">
+      <strong>Horaires &amp; Congés</strong>
+      <span>{{ leavesCount }} période{{ leavesCount > 1 ? 's' : '' }} bloquée{{ leavesCount > 1 ? 's' : '' }}</span>
+    </a>
+    <a class="shortcut-card" [routerLink]="['/admin', 'admin-users']">
+      <strong>Fichier Clients</strong>
+      <span>Annuaire, contacts &amp; historique</span>
+    </a>
+    <a class="shortcut-card" [routerLink]="['/admin', 'admin-beers']">
+      <strong>Carte du Bar</strong>
+      <span>Gérer les bières spéciales</span>
+    </a>
+    <a class="shortcut-card" [routerLink]="['/admin', 'admin-message']">
+      <strong>Messagerie</strong>
+      <span>Répondre aux clients</span>
+    </a>
+  </section>
+</div>
