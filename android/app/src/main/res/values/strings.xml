@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">cafe-ciseaux</string>
-    <string name="title_activity_main">cafe-ciseaux</string>
-    <string name="package_name">com.cafeciseaux.myapp</string>
-    <string name="custom_url_scheme">com.cafeciseaux.myapp</string>
+    <string name="app_name">Café Ciseaux</string>
+    <string name="title_activity_main">Café Ciseaux</string>
+    <string name="package_name">be.cafeciseaux.app</string>
+    <string name="custom_url_scheme">be.cafeciseaux.app</string>
 </resources>

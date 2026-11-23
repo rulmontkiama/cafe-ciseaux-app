@@ -46,3 +46,34 @@ workflows:
         auth: integration
         submit_to_testflight: true
         submit_to_app_store: false
+
+  android-play-store:
+    name: Café Ciseaux — Android Play Store
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      android_signing:
+        - cafe_ciseaux_keystore
+      node: 20
+      java: 17
+    scripts:
+      - name: Installer les dépendances npm
+        script: |
+          npm install --legacy-peer-deps
+      - name: Compiler l'application Angular (production)
+        script: |
+          npx ng build --configuration production
+      - name: Synchroniser Capacitor Android
+        script: |
+          npx cap sync android
+      - name: Mettre à jour le versionCode Android
+        script: |
+          BUILD_NUM="${PROJECT_BUILD_NUMBER:-1}"
+          sed -i "s/versionCode [0-9]*/versionCode ${BUILD_NUM}/" android/app/build.gradle
+      - name: Générer l'Android App Bundle signé (.aab)
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease
+    artifacts:
+      - android/app/build/outputs/bundle/release/*.aab
