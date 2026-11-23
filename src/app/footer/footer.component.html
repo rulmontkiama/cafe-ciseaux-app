@@ -10,31 +10,27 @@
                 </li>
                 <li id="rendez_vous" [routerLink]="['/rendez-vous']" routerLinkActive="nav-active" (click)="closeSchedule()" title="Prendre rendez-vous">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <rect x="3.5" y="5.5" width="17" height="15" rx="1" stroke="currentColor" stroke-width="1.45"/>
-                        <line x1="3.5" y1="10" x2="20.5" y2="10" stroke="currentColor" stroke-width="1.45"/>
-                        <line x1="8" y1="3" x2="8" y2="6.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="square"/>
-                        <line x1="16" y1="3" x2="16" y2="6.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="square"/>
-                        <path d="M9 15.2l2 2 4.2-4.2" stroke="currentColor" stroke-width="1.45" stroke-linecap="square" stroke-linejoin="miter"/>
+                        <rect x="3.5" y="5.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.55"/>
+                        <line x1="3.5" y1="10" x2="20.5" y2="10" stroke="currentColor" stroke-width="1.55"/>
+                        <line x1="8" y1="3" x2="8" y2="6.5" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
+                        <line x1="16" y1="3" x2="16" y2="6.5" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
+                        <path d="M9 15.2l2 2 4.2-4.2" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     <span>RDV</span>
                 </li>
                 <li id="bar" [routerLink]="['/bar']" routerLinkActive="nav-active" (click)="closeSchedule()" title="Le bar et nos bières">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M6.5 4.2h11l-.95 6.4a4.6 4.6 0 0 1-4.55 3.9h0a4.6 4.6 0 0 1-4.55-3.9L6.5 4.2Z" stroke="currentColor" stroke-width="1.45" stroke-linejoin="miter"/>
-                        <line x1="7.1" y1="7.8" x2="16.9" y2="7.8" stroke="currentColor" stroke-width="1.45"/>
-                        <line x1="12" y1="14.5" x2="12" y2="20" stroke="currentColor" stroke-width="1.45"/>
-                        <line x1="8.2" y1="20" x2="15.8" y2="20" stroke="currentColor" stroke-width="1.45" stroke-linecap="square"/>
+                        <path d="M6.5 4.2h11l-.95 6.4a4.6 4.6 0 0 1-4.55 3.9h0a4.6 4.6 0 0 1-4.55-3.9L6.5 4.2Z" stroke="currentColor" stroke-width="1.55" stroke-linejoin="round"/>
+                        <line x1="7.1" y1="7.8" x2="16.9" y2="7.8" stroke="currentColor" stroke-width="1.55"/>
+                        <line x1="12" y1="14.5" x2="12" y2="20" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
+                        <line x1="8.2" y1="20" x2="15.8" y2="20" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
                     </svg>
                     <span>Bar</span>
                 </li>
                 <li id="horaires" [class.nav-active]="scheduleBool" (click)="viewSchedule()" title="Horaires et infos pratiques">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.45"/>
-                        <line x1="12" y1="3.5" x2="12" y2="5.1" stroke="currentColor" stroke-width="1.45"/>
-                        <line x1="20.5" y1="12" x2="18.9" y2="12" stroke="currentColor" stroke-width="1.45"/>
-                        <line x1="12" y1="20.5" x2="12" y2="18.9" stroke="currentColor" stroke-width="1.45"/>
-                        <line x1="3.5" y1="12" x2="5.1" y2="12" stroke="currentColor" stroke-width="1.45"/>
-                        <path d="M12 7.6V12l3.2 2" stroke="currentColor" stroke-width="1.45" stroke-linecap="square" stroke-linejoin="miter"/>
+                        <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.55"/>
+                        <path d="M12 7.5V12l3.2 2" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     <span>Horaires</span>
                 </li>
