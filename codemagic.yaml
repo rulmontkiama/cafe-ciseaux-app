@@ -22,7 +22,10 @@ workflows:
           npx ng build --configuration production
       - name: Synchroniser Capacitor iOS et CocoaPods
         script: |
+          node scripts/patch-ios-pods.mjs
+          rm -f ios/App/Podfile.lock
           npx cap sync ios
+          cd ios/App && pod install --repo-update
       - name: Mettre à jour le numéro de build iOS
         script: |
           BUILD_NUM="${PROJECT_BUILD_NUMBER:-1}"
@@ -71,6 +74,8 @@ workflows:
           xcode-project build-ipa \
             --workspace "$CM_BUILD_DIR/$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME"
+          echo "=== Vérification des PrivacyInfo.xcprivacy embarqués ==="
+          find build/ios/xcarchive -name "PrivacyInfo.xcprivacy" -print || true
       - name: Envoyer l'IPA sur App Store Connect / TestFlight
         script: |
           set -e

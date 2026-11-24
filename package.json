@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "postinstall": "node scripts/patch-ios-pods.mjs"
   },
   "private": true,
   "dependencies": {
@@ -20,10 +21,10 @@
     "@angular/platform-browser-dynamic": "^17.0.5",
     "@angular/router": "^17.0.5",
     "@capacitor-firebase/authentication": "^5.4.1",
-    "@capacitor/android": "^5.5.1",
-    "@capacitor/cli": "^5.5.1",
-    "@capacitor/core": "^5.5.1",
-    "@capacitor/ios": "^5.5.1",
+    "@capacitor/android": "5.7.8",
+    "@capacitor/cli": "5.7.8",
+    "@capacitor/core": "5.7.8",
+    "@capacitor/ios": "5.7.8",
     "firebase": "^10.7.0",
     "hamburgers": "^1.2.1",
     "hammerjs": "^2.0.8",

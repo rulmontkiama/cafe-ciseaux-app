@@ -19,8 +19,11 @@ build:
         app_id: "85c8d8db-7e42-4fc3-9d89-d3bd21f4cb19"
         build_commands:
           - "npm install --legacy-peer-deps"
+          - "node scripts/patch-ios-pods.mjs"
           - "npx ng build --configuration production"
+          - "rm -f ios/App/Podfile.lock"
           - "npx cap sync ios"
+          - "cd ios/App && pod install --repo-update && cd ../.."
           - "xcodebuild -workspace ios/App/App.xcworkspace -scheme App -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -configuration Debug -derivedDataPath ios/App/build CODE_SIGNING_ALLOWED=NO IPHONEOS_DEPLOYMENT_TARGET=15.0"
         output_path: "ios/App/build/Build/Products/Debug-iphonesimulator/App.app"
       android:
