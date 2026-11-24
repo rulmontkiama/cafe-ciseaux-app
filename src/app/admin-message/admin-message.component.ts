@@ -2,7 +2,11 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, map } from 'rxjs';
 import { AuthenticationService } from '../services/authentication.service';
-import { MessageService } from '../services/message.service';
+import {
+  DEFAULT_MESSAGE_TTL_DAYS,
+  MESSAGE_TTL_OPTIONS,
+  MessageService
+} from '../services/message.service';
 import { UsersService } from '../services/users.service';
 import { AlertService } from 'src/app/services/alert.service';
 import { Chat } from '../models/chat.model';
@@ -23,6 +27,25 @@ export class AdminMessageComponent implements OnInit, OnDestroy {
   filteredChats: Chat[] = [];
   searchQuery = '';
   isLoading = true;
+  clearingConv = false;
+
+  readonly ttlOptions = MESSAGE_TTL_OPTIONS;
+  selectedTtlDays = DEFAULT_MESSAGE_TTL_DAYS;
+
+  readonly quickTemplates = [
+    {
+      label: 'Décaler un RDV',
+      text: 'Bonjour, serait-il possible de décaler votre rendez-vous ? Dites-moi quel créneau vous arrangerait le mieux.'
+    },
+    {
+      label: 'RDV confirmé',
+      text: 'C’est bien noté, votre rendez-vous est confirmé. À bientôt chez Café Ciseaux !'
+    },
+    {
+      label: 'Imprévu salon',
+      text: 'Bonjour, petit imprévu au salon aujourd’hui : pouvons-nous déplacer votre rendez-vous ? Merci pour votre compréhension.'
+    }
+  ];
 
   private chatsSub?: Subscription;
   private convSub?: Subscription;
@@ -47,11 +70,21 @@ export class AdminMessageComponent implements OnInit, OnDestroy {
 
     this.chatsSub = this.msgService.getChatMsg(this.userDetails).subscribe({
       next: (chats) => {
-        this.allChats = (chats || []).sort((a: any, b: any) => {
-          const sa = a?.date?.seconds ?? 0;
-          const sb = b?.date?.seconds ?? 0;
-          return sb - sa;
-        });
+        this.allChats = (chats || [])
+          .map((chat: any) => {
+            const ms = chat.dateMs || this.msgService.toMs(chat.date);
+            const formatted = ms ? this.dateService.formatDate(ms) : null;
+            const dayLbl = ms ? this.msgService.formatDayDivider(ms) : '';
+            const previewTime = formatted
+              ? (dayLbl === "Aujourd'hui" ? formatted.hours : `${dayLbl} · ${formatted.hours}`)
+              : '';
+            return {
+              ...chat,
+              dateMs: ms,
+              hours: previewTime
+            };
+          })
+          .sort((a: any, b: any) => (b.dateMs || 0) - (a.dateMs || 0));
         this.applyFilter();
         this.isLoading = false;
       },
@@ -127,14 +160,7 @@ export class AdminMessageComponent implements OnInit, OnDestroy {
       .pipe(
         map((conversation) =>
           (conversation || []).map((message) => {
-            const ms =
-              typeof message.date?.toMillis === 'function'
-                ? message.date.toMillis()
-                : typeof message.date?.seconds === 'number'
-                  ? message.date.seconds * 1000
-                  : message.date instanceof Date
-                    ? message.date.getTime()
-                    : Date.now();
+            const ms = message.dateMs || this.msgService.toMs(message.date) || Date.now();
             const formatted = this.dateService.formatDate(ms);
             return {
               ...message,
@@ -150,7 +176,7 @@ export class AdminMessageComponent implements OnInit, OnDestroy {
           this.msgService.updateIsRead(user.uid, this.userDetails).catch(() => {});
           setTimeout(() => {
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-          }, 50);
+          }, 60);
         },
         error: (error) => {
           console.error(error);
@@ -173,6 +199,33 @@ export class AdminMessageComponent implements OnInit, OnDestroy {
     }
   }
 
+  applyQuickReply(text: string): void {
+    this.newMessage = text;
+  }
+
+  async clearConversation(): Promise<void> {
+    if (!this.selectedUser?.uid || !this.userDetails?.uid || this.clearingConv) return;
+    const confirmed = window.confirm(
+      `Supprimer définitivement tous les messages de la discussion avec ${this.selectedUser.prenom} ${this.selectedUser.nom} ?`
+    );
+    if (!confirmed) return;
+
+    this.clearingConv = true;
+    try {
+      const deletedCount = await this.msgService.deleteConversation(this.selectedUser.uid, this.userDetails.uid);
+      this.conversation = [];
+      this._toast.showSucces(
+        'DISCUSSION VIDÉE',
+        `${deletedCount} message${deletedCount > 1 ? 's' : ''} supprimé${deletedCount > 1 ? 's' : ''}`
+      );
+    } catch (error) {
+      console.error(error);
+      this._toast.showError('ERREUR', 'Impossible de supprimer cette discussion');
+    } finally {
+      this.clearingConv = false;
+    }
+  }
+
   onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -191,8 +244,13 @@ export class AdminMessageComponent implements OnInit, OnDestroy {
     const messageTimestamp = new Date();
     this.newMessage = '';
     try {
-      await this.msgService.onSendMessage(this.userDetails.uid, this.selectedUser.uid, text, messageTimestamp);
-      this._toast.showSucces('CONFIRMATION', 'Le message a été envoyé');
+      await this.msgService.onSendMessage(
+        this.userDetails.uid,
+        this.selectedUser.uid,
+        text,
+        messageTimestamp,
+        this.selectedTtlDays
+      );
     } catch (error) {
       console.error(error);
       this.newMessage = text;

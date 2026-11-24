@@ -227,10 +227,14 @@ export class ScheduleService {
     await this.commitInChunks(refs.map(ref => ({ ref, data: null })));
   }
 
-  /** Bloque un seul jour. Accepte un Date (jour choisi, heure locale) ou une clé 'AAAA-MM-JJ'. */
-  async addBlockDay(blockDay: Date | string): Promise<void> {
+  /** Bloque un seul jour (avec motif optionnel). Accepte un Date (jour choisi, heure locale) ou une clé 'AAAA-MM-JJ'. */
+  async addBlockDay(blockDay: Date | string, label: string = ''): Promise<void> {
     const key = this.toDayKey(blockDay);
-    await this.db.collection('blocked_days').doc(key).set({ date: this.dayTimestamp(key), label: '' });
+    const cleanLabel = (label || '').trim().slice(0, 80);
+    await this.db.collection('blocked_days').doc(key).set({
+      date: this.dayTimestamp(key),
+      label: cleanLabel
+    });
   }
 
   /** Débloque un seul jour (Date ou clé). Gère aussi les anciens jours bloqués créés avec un ID automatique. */

@@ -310,6 +310,29 @@
 
 .rdv-actions-col {
   flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.msg-rdv-btn {
+  padding: 6px 10px;
+  background: rgba(216, 207, 196, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(216, 207, 196, 0.4);
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background-color: var(--accent);
+    color: var(--bg);
+  }
 }
 
 .status-passed {

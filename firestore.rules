@@ -149,8 +149,10 @@ service cloud.firestore {
     }
 
     // ---------- blocked_days ----------
+    // Lecture publique (aucune donnée personnelle) pour afficher les fermetures exceptionnelles
+    // dès l'accueil et la fenêtre Horaires & Infos, même sans être connecté.
     match /blocked_days/{id} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isAdmin();
     }
 
@@ -181,7 +183,14 @@ service cloud.firestore {
         && changedKeys().hasOnly(['is_read'])
         && request.resource.data.is_read == true;
 
-      allow delete: if false;
+      // Suppression autorisée pour l'admin (nettoyage de conversation) ou pour les participants
+      // uniquement lorsque le message temporaire a expiré (expiresAt <= request.time).
+      allow delete: if isAdmin()
+        || (isSignedIn()
+            && (resource.data.from_id == request.auth.uid
+                || resource.data.to_id == request.auth.uid)
+            && resource.data.expiresAt is timestamp
+            && resource.data.expiresAt <= request.time);
     }
 
     // ---------- demo ----------

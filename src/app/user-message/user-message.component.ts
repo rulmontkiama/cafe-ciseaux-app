@@ -1,6 +1,10 @@
 import { Component, OnDestroy, ViewChild } from '@angular/core';
 import { Subscription, map } from 'rxjs';
-import { MessageService } from '../services/message.service';
+import {
+  DEFAULT_MESSAGE_TTL_DAYS,
+  MESSAGE_TTL_OPTIONS,
+  MessageService
+} from '../services/message.service';
 import { AuthenticationService } from '../services/authentication.service';
 import { Message } from '../models/message.model';
 import { AlertService } from '../services/alert.service';
@@ -24,6 +28,9 @@ export class UserMessageComponent implements OnDestroy {
   adminUser: any;
   isLoading = true;
   noRecipient = false;
+
+  readonly ttlOptions = MESSAGE_TTL_OPTIONS;
+  selectedTtlDays = DEFAULT_MESSAGE_TTL_DAYS;
 
   private convSub?: Subscription;
 
@@ -52,22 +59,17 @@ export class UserMessageComponent implements OnDestroy {
 
     this.convSub = (await this.msgService.getConversation(adminId, this.userDetails))
       .pipe(
-        map((conversation) => {
-          conversation.forEach((message) => {
-            const ms =
-              typeof message.date?.toMillis === 'function'
-                ? message.date.toMillis()
-                : typeof message.date?.seconds === 'number'
-                  ? message.date.seconds * 1000
-                  : message.date instanceof Date
-                    ? message.date.getTime()
-                    : Date.now();
+        map((conversation) =>
+          (conversation || []).map((message) => {
+            const ms = message.dateMs || this.msgService.toMs(message.date) || Date.now();
             const formattedDate = this.dateService.formatDate(ms);
-            message.date = formattedDate.dateString;
-            message.hours = formattedDate.hours;
-          });
-          return conversation;
-        })
+            return {
+              ...message,
+              date: formattedDate.dateString,
+              hours: formattedDate.hours
+            };
+          })
+        )
       )
       .subscribe({
         next: (conversation) => {
@@ -76,7 +78,7 @@ export class UserMessageComponent implements OnDestroy {
           this.msgService.updateIsRead(adminId, this.userDetails).catch(() => {});
           setTimeout(() => {
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-          }, 50);
+          }, 60);
         },
         error: (error) => {
           console.error(error);
@@ -123,10 +125,16 @@ export class UserMessageComponent implements OnDestroy {
       return false;
     }
     try {
-      await this.msgService.onSendMessage(this.userDetails.uid, adminId, textToSend, messageTimestamp);
-      this._toast.showSucces('CONFIRMATION', 'Le message a été envoyé');
+      await this.msgService.onSendMessage(
+        this.userDetails.uid,
+        adminId,
+        textToSend,
+        messageTimestamp,
+        this.selectedTtlDays
+      );
     } catch (error) {
       console.error(error);
+      this.newMessage = textToSend;
       this._toast.showError('ERREUR', "Le message n'a pas pu être envoyé");
     }
     return true;

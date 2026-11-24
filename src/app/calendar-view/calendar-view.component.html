@@ -74,6 +74,13 @@
 
         <div class="rdv-actions-col">
           <span *ngIf="rdv.passed" class="status-passed">Passé</span>
+          <a
+            *ngIf="!rdv.passed && rdv.user_id && rdv.user_id !== 'walk-in'"
+            class="msg-rdv-btn"
+            [routerLink]="['/admin', 'admin-message']"
+            [queryParams]="{ uid: rdv.user_id }">
+            Message
+          </a>
           <button
             *ngIf="!rdv.passed"
             type="button"

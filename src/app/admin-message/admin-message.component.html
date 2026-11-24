@@ -5,14 +5,14 @@
       <span class="cut_angle">
         <h2>MESSAGES CLIENTS.</h2>
       </span>
-      <p>Répondez directement aux demandes de vos clients.</p>
+      <p>Répondez à vos clients · les messages temporaires s'effacent automatiquement pour garder la base légère.</p>
     </div>
 
     <div class="admin_search">
       <img src="assets/FIND_USER.svg" alt="">
       <input
         type="text"
-        placeholder="Rechercher une conversation…"
+        placeholder="Rechercher un client ou un message…"
         class="admin_search_input"
         [value]="searchQuery"
         (input)="onSearchUsers($event)">
@@ -20,7 +20,7 @@
 
     <p *ngIf="isLoading" class="msg-state">Chargement des conversations…</p>
     <p *ngIf="!isLoading && filteredChats.length === 0" class="msg-state">
-      Aucune conversation trouvée.
+      Aucune conversation active.
     </p>
 
     <ul *ngIf="!isLoading && filteredChats.length > 0" class="user_find_list">
@@ -31,13 +31,20 @@
         (click)="selectUser(user)">
         <div class="avatar_find">
           <img [src]="user.avatar || 'assets/AVATAR.svg'" alt="Avatar client">
+          <span class="unread-dot" *ngIf="user.is_read == false && user.from_id != userDetails?.uid"></span>
         </div>
         <div class="find_split">
           <div class="chat-preview-top">
             <strong class="names_find">{{ user.prenom | uppercase }} {{ user.nom | uppercase }}</strong>
-            <span class="unread-badge" *ngIf="user.is_read == false && user.from_id != userDetails?.uid">Nouveau</span>
+            <div class="preview-right-meta">
+              <span class="preview-time" *ngIf="user.hours">{{ user.hours }}</span>
+              <span class="unread-badge" *ngIf="user.is_read == false && user.from_id != userDetails?.uid">Nouveau</span>
+            </div>
           </div>
-          <p class="msg_find">{{ user.msg }}</p>
+          <p class="msg_find">
+            <span class="you-prefix" *ngIf="user.from_id === userDetails?.uid">Vous : </span>{{ user.msg }}
+          </p>
+          <span class="preview-expiry" *ngIf="user.expiryHint">⏱ {{ user.expiryHint }}</span>
         </div>
       </li>
     </ul>
@@ -47,19 +54,47 @@
   <div *ngIf="selectedUser" class="user_info_container" id="user_info_{{ selectedUser.uid }}">
     <div class="conv-header-bar">
       <button type="button" class="back-inbox-btn" (click)="deselectUser()">← Conversations</button>
+      <button
+        *ngIf="conversation.length > 0"
+        type="button"
+        class="clear-conv-btn"
+        [disabled]="clearingConv"
+        (click)="clearConversation()">
+        {{ clearingConv ? 'Suppression…' : 'Vider la discussion' }}
+      </button>
     </div>
 
-    <div class="user_info">
-      <div class="avatar_container">
-        <img [src]="selectedUser.avatar || 'assets/AVATAR.svg'" alt="Avatar client">
-      </div>
-      <div class="name_container cut_angle">
-        <h3 class="name">{{ selectedUser.prenom | uppercase }} {{ selectedUser.nom | uppercase }}</h3>
+    <!-- EN-TÊTE CLIENT -->
+    <div class="chat-header-card">
+      <div class="user_info">
+        <div class="avatar_container">
+          <img [src]="selectedUser.avatar || 'assets/AVATAR.svg'" alt="Avatar client">
+        </div>
+        <div class="chat-peer-meta">
+          <h3 class="peer-name">{{ selectedUser.prenom | uppercase }} {{ selectedUser.nom | uppercase }}</h3>
+          <span class="peer-sub">Client · Discussion privée</span>
+        </div>
       </div>
     </div>
 
+    <!-- BANDEAU ÉPHÉMÈRE -->
+    <div class="ephemeral-banner" role="note">
+      <span class="eph-icon" aria-hidden="true">⏱</span>
+      <span><strong>Messages temporaires</strong> · effacés automatiquement après {{ selectedTtlDays === 1 ? '24 h' : selectedTtlDays + ' jours' }} (ou manuellement via « Vider »).</span>
+    </div>
+
+    <!-- FIL DE DISCUSSION -->
     <div class="conversation">
+      <div *ngIf="conversation.length === 0" class="chat-empty-card">
+        <p class="empty-title">Aucun message actif</p>
+        <p class="empty-sub">Utilisez un raccourci ci-dessous ou écrivez directement au client.</p>
+      </div>
+
       <ng-container *ngFor="let message of conversation">
+        <div *ngIf="message.showDayDivider && message.dayGroupLabel" class="chat-day-divider">
+          <span>{{ message.dayGroupLabel }}</span>
+        </div>
+
         <div
           class="message"
           [ngClass]="{
@@ -71,30 +106,69 @@
               <span class="prenom">{{ message.prenom | uppercase }}</span>
             </div>
             <div class="message_content">
-              <span class="message_text">
-                <p>{{ message.msg }}</p>
-              </span>
+              <p>{{ message.msg }}</p>
             </div>
             <div class="date_content">
-              <span class="date">{{ message.date }} · {{ message.hours }}</span>
+              <span class="date">{{ message.hours }}</span>
+              <span *ngIf="message.expiryHint" class="expiry-chip">· {{ message.expiryHint }}</span>
+              <span
+                *ngIf="message.uid === userDetails.uid"
+                class="read-tick"
+                [class.is-read]="message.is_read"
+                [title]="message.is_read ? 'Lu par le client' : 'Envoyé'">
+                {{ message.is_read ? '✓✓' : '✓' }}
+              </span>
             </div>
           </div>
         </div>
       </ng-container>
     </div>
 
+    <!-- BARRE DE SAISIE ADMIN -->
     <div class="send_msg_container">
+      <div class="composer-meta-row">
+        <div class="ttl-picker" role="group" aria-label="Durée avant effacement automatique">
+          <span class="ttl-label">⏱ Durée :</span>
+          <button
+            *ngFor="let opt of ttlOptions"
+            type="button"
+            class="ttl-pill"
+            [class.is-selected]="selectedTtlDays === opt.days"
+            (click)="selectedTtlDays = opt.days">
+            {{ opt.label }}
+          </button>
+        </div>
+
+        <div class="quick-replies">
+          <button
+            *ngFor="let tpl of quickTemplates"
+            type="button"
+            class="quick-reply-chip"
+            (click)="applyQuickReply(tpl.text)">
+            {{ tpl.label }}
+          </button>
+        </div>
+      </div>
+
       <form class="send_msg_form" (ngSubmit)="onSendMessage()">
         <div class="message_container">
           <textarea
             name="newMessage"
-            rows="2"
+            rows="1"
             [(ngModel)]="newMessage"
             (keydown)="onKeydown($event)"
-            placeholder="Écrire une réponse…">
-          </textarea>
-          <button #submitButton id="submit-button" type="submit" class="submit_container" aria-label="Envoyer">
-            <img src="assets/SEND.svg" alt="Envoyer">
+            placeholder="Écrire une réponse au client…"></textarea>
+          <button
+            #submitButton
+            id="submit-button"
+            type="submit"
+            class="submit_container"
+            [disabled]="!newMessage.trim()"
+            aria-label="Envoyer">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4.5 19.5L20.5 12L4.5 4.5L7.5 12L4.5 19.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <line x1="7.5" y1="12" x2="14.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
           </button>
         </div>
       </form>

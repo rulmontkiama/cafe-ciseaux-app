@@ -233,20 +233,30 @@
   }
 }
 
-/* ESPACE COMMUNICATION DU SALON */
+/* ESPACE COMMUNICATION DU SALON — STYLE JAUNE DORÉ (IDENTIQUE À L'ENCART 20 MIN) */
 .salon-comm-box {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-subtle);
+  padding: 15px 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(242, 201, 76, 0.15) 0%,
+    rgba(242, 201, 76, 0.04) 100%
+  );
+  border: 1px solid rgba(242, 201, 76, 0.36);
+  border-left: 3px solid #f2c94c;
   border-radius: 4px;
+  box-shadow: 0 8px 22px rgba(242, 201, 76, 0.08);
 
   &.has-announcement {
-    background: linear-gradient(135deg, rgba(216, 207, 196, 0.16) 0%, rgba(255, 255, 255, 0.03) 100%);
-    border-color: rgba(216, 207, 196, 0.45);
-    border-left: 3px solid var(--accent);
+    background: linear-gradient(
+      135deg,
+      rgba(242, 201, 76, 0.22) 0%,
+      rgba(242, 201, 76, 0.06) 100%
+    );
+    border-color: rgba(242, 201, 76, 0.52);
+    border-left: 3px solid #f2c94c;
   }
 
   .comm-top {
@@ -261,22 +271,23 @@
     font-weight: 600;
     letter-spacing: 0.14em;
     padding: 3px 9px;
-    background-color: var(--accent);
-    color: var(--bg);
+    background-color: #f2c94c;
+    color: #0c0c0c;
     border-radius: var(--radius);
 
     &.is-neutral {
-      background: rgba(216, 207, 196, 0.14);
-      color: var(--accent);
-      border: 1px solid rgba(216, 207, 196, 0.35);
+      background: rgba(242, 201, 76, 0.22);
+      color: #f5d565;
+      border: 1px solid rgba(242, 201, 76, 0.48);
     }
   }
 
   .comm-eyebrow {
     font-family: var(--font-display);
-    font-size: 10px;
-    letter-spacing: 0.16em;
-    color: var(--ink-muted);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: #f5d565;
   }
 
   .comm-title {
@@ -284,14 +295,14 @@
     font-family: var(--font-display);
     font-size: 16px;
     font-weight: 500;
-    color: var(--ink);
+    color: #fff6d6;
   }
 
   .comm-body {
     margin: 0;
     font-size: 13.5px;
     line-height: 1.55;
-    color: var(--ink-muted);
+    color: var(--ink);
     white-space: pre-line;
   }
 
@@ -308,8 +319,8 @@
     justify-content: center;
     padding: 8px 14px;
     border-radius: var(--radius);
-    border: 1px solid var(--border-subtle);
-    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(242, 201, 76, 0.34);
+    background: rgba(12, 12, 12, 0.42);
     color: var(--ink);
     font-family: var(--font-display);
     font-size: 11px;
@@ -320,19 +331,20 @@
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 
     &:hover {
-      border-color: var(--ink);
-      background: rgba(255, 255, 255, 0.12);
+      border-color: #f2c94c;
+      background: rgba(242, 201, 76, 0.14);
+      color: #fff6d6;
     }
 
     &.is-primary {
-      background: rgba(216, 207, 196, 0.18);
-      border-color: rgba(216, 207, 196, 0.42);
-      color: var(--accent);
+      background: rgba(242, 201, 76, 0.2);
+      border-color: rgba(242, 201, 76, 0.55);
+      color: #f5d565;
 
       &:hover {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: var(--bg);
+        background: #f2c94c;
+        border-color: #f2c94c;
+        color: #0c0c0c;
       }
     }
   }
