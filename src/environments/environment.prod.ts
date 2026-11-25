@@ -12,6 +12,7 @@ export const environment = {
     measurementId: "G-MKWR92181W"
   },
   useStorage: false,
+  pushWorkerUrl: "https://cafe-ciseaux-push.cafe-ciseaux.workers.dev/notify-message",
   demo: {
     email: "",
     password: ""

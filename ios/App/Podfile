@@ -20,6 +20,7 @@ target 'App' do
   pod 'CapacitorFirebaseAuthentication/Google', :path => '../../node_modules/@capacitor-firebase/authentication'
   # Versions minimales conformes au Privacy Manifest Apple (ITMS-91061)
   pod 'FirebaseAuth', '>= 10.25.0'
+  pod 'FirebaseMessaging', '>= 10.25.0'
   pod 'GoogleSignIn', '~> 7.1.0'
   pod 'GTMAppAuth', '>= 4.1.1'
   pod 'GTMSessionFetcher', '>= 3.3.2'

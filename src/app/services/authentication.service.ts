@@ -13,6 +13,7 @@ import { Observable, firstValueFrom } from 'rxjs';
 import firebase from 'firebase/compat/app';
 import { GoogleAuthProvider, OAuthProvider } from 'firebase/auth';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
+import { PushNotificationsService } from './push-notifications.service';
 @Injectable({
   providedIn: 'root',
 })
@@ -29,7 +30,8 @@ export class AuthenticationService {
     private storage: AngularFireStorage,
     public adminService:AdminService,
     public ngZone: NgZone,    
-    private usersService:UsersService
+    private usersService:UsersService,
+    private pushService: PushNotificationsService
     ){
      // Précharge les constructeurs depuis la même instance Firebase que AngularFireAuth
      // (évite auth/argument-error lorsque @angular/fire utilise sa propre copie interne de firebase)
@@ -123,6 +125,7 @@ export class AuthenticationService {
       this.setAdminIds(admins);
       this.setDataInLocalStorage('token', this.generateSessionMarker());
       this.setDataInLocalStorage('userInfos', JSON.stringify(profile));
+      this.pushService.initForUser(user.uid).catch(() => {});
       return true;
     } catch (error) {
       console.error('Impossible de charger le profil', error);
@@ -379,7 +382,9 @@ export class AuthenticationService {
   }
 
     // Sign out
-    SignOut() {
+    async SignOut() {
+      const currentUid = this.userData?.uid || this.getId();
+      await this.pushService.removeCurrentToken(currentUid).catch(() => {});
       this.clearStorage();
       if (Capacitor.isNativePlatform()) {
         FirebaseAuthentication.signOut().catch(() => {});

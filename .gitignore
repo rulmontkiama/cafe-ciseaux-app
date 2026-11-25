@@ -20,3 +20,9 @@ local.properties
 # Éditeurs
 .idea/
 .vscode/
+
+# Clés et secrets locaux (ne jamais versionner)
+*firebase-adminsdk*.json
+*.p8
+.dev.vars
+.wrangler/

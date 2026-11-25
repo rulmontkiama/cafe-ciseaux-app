@@ -16,6 +16,8 @@ interface Environment {
   };
   // Firebase Storage (photos de profil et images de bières) : false tant que Storage n'est pas activé
   useStorage: boolean;
+  // URL du Cloudflare Worker gratuit qui relaie les notifications push de messages (FCM HTTP v1)
+  pushWorkerUrl: string;
   // Compte de démonstration (optionnel). Laisser vide pour désactiver le "DEMO LOGIN".
   demo: {
     email: string;
@@ -39,6 +41,7 @@ export const environment: Environment = {
     measurementId: "G-MKWR92181W"
   },
   useStorage: false,
+  pushWorkerUrl: "https://cafe-ciseaux-push.cafe-ciseaux.workers.dev/notify-message",
   demo: {
     email: "",
     password: ""

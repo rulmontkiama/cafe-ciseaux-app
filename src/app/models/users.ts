@@ -7,6 +7,7 @@ export interface Users {
   phone?: string;
   scissor: number;
   avatar: string;
+  fcmTokens?: string[];
 }
 
 export interface UsersWithRdvCount extends Users {

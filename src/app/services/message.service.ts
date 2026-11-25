@@ -4,6 +4,7 @@ import { Observable, combineLatest, firstValueFrom, forkJoin, map, of, switchMap
 import { Chat } from '../models/chat.model';
 import { UsersService } from './users.service';
 import { AuthenticationService } from './authentication.service';
+import { environment } from 'src/environments/environment';
 
 export const DEFAULT_MESSAGE_TTL_DAYS = 7;
 
@@ -56,7 +57,33 @@ export class MessageService {
       is_read: false,
       ttl_days: safeTtl,
       expiresAt,
+    }).then((docRef) => {
+      // Déclenche la notification push en arrière-plan (ne bloque ni n'échoue l'envoi du message)
+      this.triggerPushNotification(String(toId || ''), String(msg || ''));
+      return docRef;
     });
+  }
+
+  private async triggerPushNotification(toUid: string, rawMsg: string): Promise<void> {
+    const endpoint = environment.pushWorkerUrl;
+    if (!endpoint || !toUid) return;
+    try {
+      const user = await this.authService.afAuth.currentUser;
+      if (!user || user.uid === toUid) return;
+      const idToken = await user.getIdToken();
+      if (!idToken) return;
+      const preview = rawMsg.replace(/\s+/g, ' ').trim().slice(0, 140);
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ toUid, preview }),
+      });
+    } catch {
+      // Silencieux : le message est déjà enregistré dans Firestore
+    }
   }
 
   getUnreadMessageCount(userId: string): Observable<number> {

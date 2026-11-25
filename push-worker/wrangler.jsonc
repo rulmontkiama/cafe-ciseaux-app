@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
+  "name": "cafe-ciseaux-push",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-25",
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "traces": {
+      "enabled": true
+    }
+  },
+  "vars": {
+    "FIREBASE_PROJECT_ID": "cafe-ciseaux-e342d"
+  }
+}

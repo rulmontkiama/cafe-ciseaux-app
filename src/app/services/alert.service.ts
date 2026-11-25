@@ -17,4 +17,7 @@ export class AlertService {
   showWarning(title:any,msg:any){
     this.toastr.warning(msg,title, { positionClass:'inline', timeOut: 6000 })
   }
+  showInfo(title:any,msg:any){
+    this.toastr.info(msg,title, { positionClass:'inline', timeOut: 5000 })
+  }
 }

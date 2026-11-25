@@ -55,13 +55,17 @@ service cloud.firestore {
             && request.resource.data.uid == userId
             && request.resource.data.scissor == 0);
 
-      // Mise à jour : uid et email non modifiables ; compteur de ciseaux de 0 à 5.
+      // Mise à jour : uid et email non modifiables ; compteur de ciseaux de 0 à 5 ;
+      // jetons push (fcmTokens) limités à 10 appareils par compte.
       allow update: if isAdmin()
         || (isOwner(userId)
             && !changedKeys().hasAny(['uid', 'email'])
             && request.resource.data.scissor is number
             && request.resource.data.scissor >= 0
-            && request.resource.data.scissor <= 5);
+            && request.resource.data.scissor <= 5
+            && (!('fcmTokens' in request.resource.data)
+                || (request.resource.data.fcmTokens is list
+                    && request.resource.data.fcmTokens.size() <= 10)));
 
       // Suppression de son propre compte (AuthenticationService.deleteAccount).
       allow delete: if isAdmin() || isOwner(userId);
