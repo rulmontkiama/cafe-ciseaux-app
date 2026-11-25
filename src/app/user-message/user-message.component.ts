@@ -1,4 +1,5 @@
 import { Component, OnDestroy, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subscription, map } from 'rxjs';
 import {
   DEFAULT_MESSAGE_TTL_DAYS,
@@ -39,13 +40,23 @@ export class UserMessageComponent implements OnDestroy {
     private msgService: MessageService,
     private _toast: AlertService,
     private dateService: DateService,
-    private userService: UsersService
+    private userService: UsersService,
+    private router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
     this.userDetails = await this.authService.getUserInfos();
+    const adminIds = this.authService.getAdminId();
+    if (this.userDetails?.uid && Array.isArray(adminIds) && adminIds.includes(this.userDetails.uid)) {
+      this.router.navigate(['/admin/admin-message'], { replaceUrl: true });
+      return;
+    }
     const adminId = this.authService.getFirstAdminId();
-    if (!adminId) {
+    if (!adminId || adminId === this.userDetails?.uid) {
+      if (adminId && adminId === this.userDetails?.uid) {
+        this.router.navigate(['/admin/admin-message'], { replaceUrl: true });
+        return;
+      }
       this.isLoading = false;
       this.noRecipient = true;
       this._toast.showWarning('MESSAGERIE', 'Aucun destinataire disponible pour le moment');

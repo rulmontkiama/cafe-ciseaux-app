@@ -523,6 +523,18 @@ export default {
       const sent = results.filter((r) => r.ok).length;
       const failed = results.length - sent;
       const deadTokens = results.filter((r) => r.deadToken).map((r) => r.token);
+      const errorCodes = results.filter((r) => !r.ok).map((r) => `${r.status}:${r.code}`);
+
+      console.log(
+        JSON.stringify({
+          event: 'fcm_dispatch',
+          tokens: tokens.length,
+          sent,
+          failed,
+          cleaned: deadTokens.length,
+          errorCodes,
+        })
+      );
 
       if (deadTokens.length > 0) {
         ctx.waitUntil(removeDeadTokensFromUser(projectId, accessToken, toUid, deadTokens));

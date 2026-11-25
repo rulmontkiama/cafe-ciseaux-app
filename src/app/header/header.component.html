@@ -8,7 +8,7 @@
     <div id="user_side_center" class="user_side_center">
       <div *ngIf="isUserLoggedIn" id="user_block" class="user_block">
         <div id="user_block_right" class="user_block_right">
-          <a class="header-chip" [routerLink]="['user-message']" routerLinkActive="is-active" [class.has-unread]="msgCount > 0" title="Messages">
+          <a class="header-chip" [routerLink]="isAdmin() ? ['/admin/admin-message'] : ['/user-message']" routerLinkActive="is-active" [class.has-unread]="msgCount > 0" title="Messages">
             <img src="assets/MSG.svg" alt="Messages">
             <span>{{ msgCount }}</span>
           </a>

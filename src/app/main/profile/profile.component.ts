@@ -7,6 +7,7 @@ import { AuthenticationService } from 'src/app/services/authentication.service';
 import { RendezVousService } from 'src/app/services/rendez-vous.service';
 import { DateService } from 'src/app/services/date.service';
 import { UsersService } from 'src/app/services/users.service';
+import { PushNotificationsService, PushStatusState } from 'src/app/services/push-notifications.service';
 import { environment } from '../../../environments/environment';
 
 export interface ProfileRdvItem {
@@ -51,10 +52,19 @@ export class ProfileComponent implements OnInit, OnDestroy {
   public pastRdv: ProfileRdvItem[] = [];
   public cancellingId: string | null = null;
   public showDangerZone = false;
+  public pushSupported = false;
+  public pushStatus: PushStatusState = {
+    supported: false,
+    permission: 'unknown',
+    registered: false,
+    busy: false,
+    detail: '',
+  };
 
   private uid = '';
   private rdvSub?: Subscription;
   private userSub?: Subscription;
+  private pushSub?: Subscription;
 
   constructor(
     private _toast: AlertService,
@@ -62,6 +72,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private rendez_vous: RendezVousService,
     private dateService: DateService,
     private usersService: UsersService,
+    private pushService: PushNotificationsService,
     private db: AngularFirestore
   ) {}
 
@@ -79,6 +90,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.scissor = Math.max(0, Math.min(5, Number(userDetails.scissor) || 0));
     this.avatar = userDetails.avatar || 'assets/AVATAR.svg';
     this.uid = userDetails.uid || '';
+    this.pushSupported = this.pushService.isNativeSupported;
+    if (this.pushSupported) {
+      this.pushSub = this.pushService.status$.subscribe((st) => {
+        this.pushStatus = st;
+      });
+    }
 
     // Synchronise en temps réel les points fidélité, le téléphone et l'avatar
     this.userSub = this.usersService.userObserve(this.uid).subscribe({
@@ -138,6 +155,22 @@ export class ProfileComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.rdvSub?.unsubscribe();
     this.userSub?.unsubscribe();
+    this.pushSub?.unsubscribe();
+  }
+
+  async enablePushNotifications(): Promise<void> {
+    if (!this.uid) return;
+    const state = await this.pushService.enableManually(this.uid);
+    if (state.registered) {
+      this._toast.showSucces('NOTIFICATIONS', 'Notifications activées sur cet appareil');
+    } else if (state.permission === 'denied') {
+      this._toast.showWarning(
+        'NOTIFICATIONS BLOQUÉES',
+        'Activez-les dans Réglages > Café Ciseaux > Notifications'
+      );
+    } else if (state.detail) {
+      this._toast.showWarning('NOTIFICATIONS', state.detail);
+    }
   }
 
   get nextRdv(): ProfileRdvItem | null {

@@ -3,22 +3,38 @@ import { Router } from '@angular/router';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Capacitor } from '@capacitor/core';
 import { FirebaseMessaging, Importance, Visibility } from '@capacitor-firebase/messaging';
-import firebase from 'firebase/compat/app';
-import { firstValueFrom } from 'rxjs';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { AlertService } from './alert.service';
 
 const MAX_TOKENS_PER_USER = 10;
+
+export interface PushStatusState {
+  supported: boolean;
+  permission: 'prompt' | 'granted' | 'denied' | 'unknown';
+  registered: boolean;
+  busy: boolean;
+  detail: string;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class PushNotificationsService {
   private listenersBound = false;
+  private visibilityBound = false;
   private channelCreated = false;
   private activeUid: string | null = null;
   private currentToken: string | null = null;
   private lastSavedKey: string | null = null;
   private initInFlight = false;
+
+  readonly status$ = new BehaviorSubject<PushStatusState>({
+    supported: Capacitor.isNativePlatform(),
+    permission: 'unknown',
+    registered: false,
+    busy: false,
+    detail: '',
+  });
 
   constructor(
     private db: AngularFirestore,
@@ -26,6 +42,19 @@ export class PushNotificationsService {
     private ngZone: NgZone,
     private alertService: AlertService
   ) {}
+
+  get isNativeSupported(): boolean {
+    return Capacitor.isNativePlatform();
+  }
+
+  private setStatus(partial: Partial<PushStatusState>): void {
+    this.ngZone.run(() => {
+      this.status$.next({
+        ...this.status$.value,
+        ...partial,
+      });
+    });
+  }
 
   /**
    * Initialise les notifications push natives (iOS / Android) pour l'utilisateur connecté.
@@ -38,34 +67,135 @@ export class PushNotificationsService {
 
     this.activeUid = uid;
     await this.bindListenersOnce();
+    this.bindResumeListenerOnce();
     await this.ensureAndroidChannel();
 
     if (this.initInFlight) {
       return;
     }
     this.initInFlight = true;
+    this.setStatus({ busy: true });
 
     try {
       const perm = await FirebaseMessaging.checkPermissions();
-      let receiveStatus = perm?.receive;
-      if (receiveStatus === 'prompt' || receiveStatus === 'prompt-with-rationale') {
+      let receiveStatus = perm?.receive || 'prompt';
+
+      if (receiveStatus !== 'granted' && receiveStatus !== 'denied') {
         const req = await FirebaseMessaging.requestPermissions();
-        receiveStatus = req?.receive;
+        receiveStatus = req?.receive || 'denied';
       }
 
       if (receiveStatus !== 'granted') {
+        this.setStatus({
+          permission: receiveStatus === 'denied' ? 'denied' : 'prompt',
+          registered: false,
+          busy: false,
+          detail:
+            receiveStatus === 'denied'
+              ? 'Autorisez les notifications dans Réglages > Café Ciseaux > Notifications.'
+              : 'Appuyez sur Activer pour recevoir les alertes de messages.',
+        });
         return;
       }
 
-      const token = await this.fetchTokenWithRetry();
+      this.setStatus({ permission: 'granted' });
+      const { token, error } = await this.fetchTokenWithRetry();
       if (token && this.activeUid === uid) {
         this.currentToken = token;
-        await this.saveTokenForUser(uid, token);
+        const saved = await this.saveTokenForUser(uid, token);
+        this.setStatus({
+          permission: 'granted',
+          registered: saved,
+          busy: false,
+          detail: saved
+            ? 'Vous recevrez une alerte à chaque nouveau message.'
+            : 'Enregistrement du profil en attente, réessayez dans un instant.',
+        });
+      } else {
+        this.setStatus({
+          permission: 'granted',
+          registered: false,
+          busy: false,
+          detail: error
+            ? `Enregistrement push en attente (${error}).`
+            : 'Appuyez sur Activer pour finaliser la connexion aux notifications.',
+        });
       }
-    } catch (err) {
-      console.warn('[Push] Initialisation différée ou impossible :', err);
+    } catch (err: any) {
+      const msg = String(err?.message || err || '').slice(0, 120);
+      console.warn('[Push] Initialisation différée ou impossible :', msg);
+      this.setStatus({
+        busy: false,
+        registered: false,
+        detail: msg ? `Impossible d’activer pour le moment (${msg}).` : '',
+      });
     } finally {
       this.initInFlight = false;
+    }
+  }
+
+  /**
+   * Déclenchement explicite depuis un bouton (geste utilisateur sur Mon profil).
+   */
+  async enableManually(uid: string): Promise<PushStatusState> {
+    if (!uid || !Capacitor.isNativePlatform()) {
+      return this.status$.value;
+    }
+
+    this.activeUid = uid;
+    this.lastSavedKey = null;
+    await this.bindListenersOnce();
+    this.bindResumeListenerOnce();
+    await this.ensureAndroidChannel();
+
+    this.setStatus({ busy: true, detail: 'Activation en cours…' });
+
+    try {
+      const req = await FirebaseMessaging.requestPermissions();
+      const receiveStatus = req?.receive || 'denied';
+      if (receiveStatus !== 'granted') {
+        this.setStatus({
+          permission: receiveStatus === 'denied' ? 'denied' : 'prompt',
+          registered: false,
+          busy: false,
+          detail: 'Activez les notifications dans Réglages > Café Ciseaux > Notifications.',
+        });
+        return this.status$.value;
+      }
+
+      this.setStatus({ permission: 'granted' });
+      const { token, error } = await this.fetchTokenWithRetry();
+      if (!token) {
+        this.setStatus({
+          permission: 'granted',
+          registered: false,
+          busy: false,
+          detail: error
+            ? `Jeton Apple/Firebase indisponible (${error}).`
+            : 'Jeton push indisponible sur cet appareil.',
+        });
+        return this.status$.value;
+      }
+
+      this.currentToken = token;
+      const saved = await this.saveTokenForUser(uid, token);
+      this.setStatus({
+        permission: 'granted',
+        registered: saved,
+        busy: false,
+        detail: saved
+          ? 'Vous recevrez une alerte à chaque nouveau message.'
+          : 'Impossible d’enregistrer cet appareil dans votre profil.',
+      });
+      return this.status$.value;
+    } catch (err: any) {
+      const msg = String(err?.message || err || '').slice(0, 120);
+      this.setStatus({
+        busy: false,
+        registered: false,
+        detail: msg || 'Activation impossible pour le moment.',
+      });
+      return this.status$.value;
     }
   }
 
@@ -78,6 +208,7 @@ export class PushNotificationsService {
     const token = this.currentToken;
     this.activeUid = null;
     this.lastSavedKey = null;
+    this.setStatus({ registered: false, busy: false, detail: '' });
 
     if (!Capacitor.isNativePlatform() || !targetUid) {
       return;
@@ -101,15 +232,37 @@ export class PushNotificationsService {
     }
 
     try {
+      const userRef = this.db.doc(`users/${targetUid}`);
       await Promise.race([
-        this.db.doc(`users/${targetUid}`).update({
-          fcmTokens: firebase.firestore.FieldValue.arrayRemove(tokenToRemove),
-        }),
+        (async () => {
+          const snap = await firstValueFrom(userRef.get()).catch(() => null);
+          if (!snap?.exists) return;
+          const data: any = snap.data() || {};
+          const existing: string[] = Array.isArray(data.fcmTokens)
+            ? data.fcmTokens.filter((t: any) => typeof t === 'string' && t.trim().length > 0)
+            : [];
+          const remaining = existing.filter((t) => t !== tokenToRemove);
+          if (remaining.length !== existing.length) {
+            await userRef.update({ fcmTokens: remaining });
+          }
+        })(),
         new Promise<void>((resolve) => setTimeout(resolve, 2500)),
       ]);
     } catch {
       // Silencieux si hors ligne ou profil déjà supprimé
     }
+  }
+
+  private bindResumeListenerOnce(): void {
+    if (this.visibilityBound || typeof document === 'undefined') {
+      return;
+    }
+    this.visibilityBound = true;
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && this.activeUid) {
+        this.initForUser(this.activeUid).catch(() => {});
+      }
+    });
   }
 
   private async bindListenersOnce(): Promise<void> {
@@ -124,7 +277,18 @@ export class PushNotificationsService {
         if (!token) return;
         this.currentToken = token;
         if (this.activeUid) {
-          this.saveTokenForUser(this.activeUid, token).catch(() => {});
+          this.saveTokenForUser(this.activeUid, token)
+            .then((saved) => {
+              if (saved) {
+                this.setStatus({
+                  permission: 'granted',
+                  registered: true,
+                  busy: false,
+                  detail: 'Vous recevrez une alerte à chaque nouveau message.',
+                });
+              }
+            })
+            .catch(() => {});
         }
       });
 
@@ -184,30 +348,31 @@ export class PushNotificationsService {
     }
   }
 
-  private async fetchTokenWithRetry(): Promise<string | null> {
-    for (let attempt = 0; attempt < 2; attempt++) {
+  private async fetchTokenWithRetry(): Promise<{ token: string | null; error: string }> {
+    let lastError = '';
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const result = await FirebaseMessaging.getToken();
         if (result?.token) {
-          return result.token;
+          return { token: result.token, error: '' };
         }
-      } catch {
-        // Sur iOS au tout premier lancement, le jeton APNs peut mettre ~1-2s à arriver
+      } catch (err: any) {
+        lastError = String(err?.message || err || '').slice(0, 100);
       }
-      if (attempt === 0) {
+      if (attempt < 2) {
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
-    return null;
+    return { token: null, error: lastError };
   }
 
-  private async saveTokenForUser(uid: string, token: string): Promise<void> {
+  private async saveTokenForUser(uid: string, token: string): Promise<boolean> {
     const cleanToken = (token || '').trim();
-    if (!uid || !cleanToken) return;
+    if (!uid || !cleanToken) return false;
 
     const saveKey = `${uid}:${cleanToken}`;
     if (this.lastSavedKey === saveKey) {
-      return;
+      return true;
     }
 
     const userRef = this.db.doc(`users/${uid}`);
@@ -219,7 +384,7 @@ export class PushNotificationsService {
       snap = await firstValueFrom(userRef.get()).catch(() => null);
     }
     if (!snap?.exists) {
-      return;
+      return false;
     }
 
     const data: any = snap.data() || {};
@@ -229,17 +394,13 @@ export class PushNotificationsService {
 
     if (existing.includes(cleanToken)) {
       this.lastSavedKey = saveKey;
-      return;
+      return true;
     }
 
-    if (existing.length >= MAX_TOKENS_PER_USER) {
-      const trimmed = [...existing.slice(-(MAX_TOKENS_PER_USER - 1)), cleanToken];
-      await userRef.update({ fcmTokens: trimmed });
-    } else {
-      await userRef.update({
-        fcmTokens: firebase.firestore.FieldValue.arrayUnion(cleanToken),
-      });
-    }
+    // Tableau pur string[] (évite tout conflit d'instance FieldValue entre firebase@10 et @angular/fire@7)
+    const nextTokens = [...existing.slice(-(MAX_TOKENS_PER_USER - 1)), cleanToken];
+    await userRef.update({ fcmTokens: nextTokens });
     this.lastSavedKey = saveKey;
+    return true;
   }
 }

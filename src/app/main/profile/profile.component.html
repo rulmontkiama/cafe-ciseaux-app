@@ -19,7 +19,7 @@
       <div class="profile-quick-actions">
         <a *ngIf="isAdmin" [routerLink]="['/admin']" class="quick-cta">ESPACE ADMIN →</a>
         <a [routerLink]="['/rendez-vous']" [class.quick-cta]="!isAdmin" [class.quick-link]="isAdmin">PRENDRE RDV</a>
-        <a [routerLink]="['/user-message']" class="quick-link">MESSAGES</a>
+        <a [routerLink]="isAdmin ? ['/admin/admin-message'] : ['/user-message']" class="quick-link">MESSAGES</a>
       </div>
     </div>
   </section>
@@ -126,6 +126,29 @@
         </li>
       </ul>
     </ng-container>
+  </section>
+
+  <!-- NOTIFICATIONS PUSH (APP iOS / ANDROID) -->
+  <section class="notif-card" *ngIf="pushSupported">
+    <div class="notif-head">
+      <div class="notif-title-wrap">
+        <span class="notif-title">NOTIFICATIONS MESSAGES</span>
+        <span class="notif-pill" [class.is-on]="pushStatus.registered">
+          {{ pushStatus.registered ? 'ACTIVÉES' : (pushStatus.busy ? 'VÉRIFICATION…' : 'INACTIVES') }}
+        </span>
+      </div>
+      <p class="notif-hint">
+        {{ pushStatus.detail || 'Recevez une alerte instantanée dès qu’un nouveau message arrive.' }}
+      </p>
+    </div>
+    <button
+      *ngIf="!pushStatus.registered"
+      type="button"
+      class="notif-enable-btn"
+      [disabled]="pushStatus.busy"
+      (click)="enablePushNotifications()">
+      {{ pushStatus.busy ? 'ACTIVATION…' : 'ACTIVER LES NOTIFICATIONS' }}
+    </button>
   </section>
 
   <!-- COORDONNÉES CLIENT (TÉLÉPHONE) -->
